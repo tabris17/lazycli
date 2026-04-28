@@ -76,11 +76,16 @@ proc findFile*(filename: string): string {.inline.} =
 
 
 template toTomlString(config: Config): string =
-  let tomlValue = newTTable()
-  if config.proxy.len > 0:
-    tomlValue["proxy"] = newTString(config.proxy)
-  tomlValue["version"] = newTString(config.version)
-  tomlValue.toTomlString
+  let toml = newTTable()
+  toml["version"] = newTString(config.version)
+  toml["proxy"] = newTString(config.proxy)
+  toml["provider"] = newTTable({
+    "name": newTString(config.provider.name),
+    "base_url": newTString(config.provider.baseUrl),
+    "api_key": newTString(config.provider.apiKey),
+    "model": newTString(config.provider.model)
+  })
+  toml.toTomlString
 
 
 proc getStr(data: TomlValueRef, key: string, default: string): string {.inline.} =
@@ -148,5 +153,4 @@ proc initConfig*(filename: string, provider: Provider, overwrite = false) =
 
 
 proc saveConfig*() =
-  let data = newTTable()
   writeFile(config.file, config.toTomlString)
