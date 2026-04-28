@@ -1,6 +1,4 @@
-import std/[envvars, httpclient, json, uri]
-import std/strutils
-import std/tables
+import std/[envvars, httpclient, json, strutils, uri]
 import ./config
 
 
