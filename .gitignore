@@ -1,3 +1,10 @@
 nimcache/
 nimblecache/
-htmldocs/
+deps/
+nimble.paths
+
+bin/
+.vscode/
+.cspell/
+nimble.develop
+nimbledeps
