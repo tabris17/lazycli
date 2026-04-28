@@ -7,6 +7,18 @@ import ./config
 var proxyUrl* = ""
 
 
+const entryPoint = "/chat/completions"
+
+
+proc toFullUrl(baseUrl: string): string {.inline.} =
+  if baseUrl.endsWith(entryPoint):
+    baseUrl
+  elif baseUrl.endsWith("/"):
+    baseUrl & entryPoint[1..^1]
+  else:
+    baseUrl & entryPoint
+
+
 proc createProxy(preferHttps: bool): Proxy {.inline.} =
   template testUrl(url: string): untyped =
     if url.len > 0:
@@ -29,7 +41,7 @@ proc query*(text: string): string =
   let httpClient = newHttpClient(proxy = createProxy(isHttpsUrl))
 
   let response = httpClient.request(
-    url = provider.baseUrl, 
+    url = provider.baseUrl.toFullUrl,
     httpMethod = HttpPost, 
     headers = newHttpHeaders({
       "Content-Type": "application/json",
