@@ -79,12 +79,12 @@ template toTomlString(config: Config): string =
   let toml = newTTable()
   toml["version"] = newTString(config.version)
   toml["proxy"] = newTString(config.proxy)
-  toml["provider"] = newTTable({
-    "name": newTString(config.provider.name),
-    "base_url": newTString(config.provider.baseUrl),
-    "api_key": newTString(config.provider.apiKey),
-    "model": newTString(config.provider.model)
-  })
+  let provider = newTTable()
+  toml["provider"] = provider
+  provider["name"] = newTString(config.provider.name)
+  provider["base_url"] = newTString(config.provider.baseUrl)
+  provider["api_key"] = newTString(config.provider.apiKey)
+  provider["model"] = newTString(config.provider.model)
   toml.toTomlString
 
 
