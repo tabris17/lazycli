@@ -58,6 +58,7 @@ let argParser = newParser(appName):
       help("Generate the shell init script")
       nohelpflag()
       flag("-h", "--help", help=helpText, shortcircuit=true, hidden = true)
+      option("-c", "--config", help=configHelp)
       arg("shell", help=shellHelp)
     command("query"):
       help("Query command")
@@ -99,10 +100,12 @@ proc main() =
 
   case opts.command:
     of "init":
-      let shell = opts.init.get.shell
+      let opts = opts.init.get
+      let shell = opts.shell
       if shell in importedShells:
         echo shellScripts[shell].render({
           "lazycli": getAppFilename(),
+          "config": opts.config
         }.toTable)
       else:
         raise newException(ValueError, "Unsupported shell: " & shell)

@@ -18,6 +18,7 @@ Set-PSReadLineKeyHandler -Key F1 -LongDescription "AI Command Helper" -ScriptBlo
         $args = @(
             'query',
             "--shell=powershell,$version",
+            '--config={{config}}'
             $lineText
         )
         {{lazycli}} @args
