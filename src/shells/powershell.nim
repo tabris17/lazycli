@@ -16,8 +16,9 @@ Set-PSReadLineKeyHandler -Key F1 -LongDescription "AI Command Helper" -ScriptBlo
     $job = Start-Job -ScriptBlock {
         param($lineText)
         $args = @(
+            'query',
             "--shell=powershell,$version",
-            'query', $lineText
+            $lineText
         )
         {{lazycli}} @args
     } -ArgumentList $line
