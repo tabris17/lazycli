@@ -6,34 +6,7 @@ import ./utils
 var proxyUrl* = ""
 
 
-const
-  entryPoint = "/chat/completions"
-  defaultPrompt = """You are a command generation engine.
-
-Task:
-Convert natural language into a single executable command for {{shell}}.
-
-Output rules:
-1. Output ONLY the command. No explanations, no comments, no extra text.
-2. Output must be a single line (no LF or CRLF).
-3. Do not use code blocks or formatting.
-4. Do not output placeholders or examples.
-5. If conversion is impossible or unsafe, output exactly: Unable to convert
-6. Output will be executed directly. Ensure no leading/trailing whitespace or hidden characters.
-
-Execution environment:
-- Shell: {{shell}} v{{shell_version}}
-- Operating System: {{os}}
-- Working Directory: {{pwd}}
-- User: {{user}}
-- Available tools: {{tools}}
-
-Constraints:
-- Must be compatible with the specified shell and OS.
-- Prefer minimal and direct commands.
-- Avoid interactive commands unless explicitly requested.
-- Avoid destructive operations unless explicitly requested.
-"""
+const entryPoint = "/chat/completions"
 
 
 proc toFullUrl(baseUrl: string): string {.inline.} =
@@ -65,8 +38,7 @@ proc query*(text: string): string =
   let provider = config.get(provider)
   let isHttpsUrl = parseUri(provider.baseUrl).scheme == "https"
   let httpClient = newHttpClient(proxy = createProxy(isHttpsUrl))
-  let promptTpl = if config.get(prompt).len > 0: config.get(prompt) else: defaultPrompt
-  let prompt = promptTpl.render({
+  let prompt = config.get(prompt).render({
     "os": getPlatform(),
     "shell": config.get(shell).name, "shell_version": config.get(shell).version, 
     "pwd": getCurrentDir(), 

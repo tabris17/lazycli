@@ -41,6 +41,13 @@ proc error(msg: string) {.inline.} =
   stderr.writeLine msg
 
 
+proc info(label, text: string) {.inline.} =
+  setForegroundColor(fgCyan)
+  stdout.write label & ": "
+  resetAttributes()
+  stdout.writeLine text
+
+
 let argParser = newParser(appName):
     help(mainHelp)
     nohelpflag()
@@ -121,13 +128,14 @@ proc main() =
           echo "Config file initialized at: " & config.get(file)
         of "show":
           loadConfig(opts.config)
-          echo "Config file: ", config.get(file)
-          echo "version: " & config.get(version)
-          echo "proxy: " & config.get(proxy)
-          echo "provider.name: " & config.get(provider).name
-          echo "provider.base_url: " & config.get(provider).baseUrl
-          echo "provider.api_key: " & config.get(provider).apiKey
-          echo "provider.model: " & config.get(provider).model
+          info("Config file", config.get(file))
+          info("version", config.get(version))
+          info("prompt", config.get(prompt))
+          info("proxy", config.get(proxy))
+          info("provider.name", config.get(provider).name)
+          info("provider.base_url", config.get(provider).baseUrl)
+          info("provider.api_key", config.get(provider).apiKey)
+          info("provider.model", config.get(provider).model)
         else:
           echo config.findFile(opts.config)
     else:

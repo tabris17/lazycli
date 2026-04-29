@@ -3,7 +3,34 @@ import parsetoml
 import ./version
 
 
-const defaultConfigFile = "config.toml"
+const
+  defaultConfigFile = "config.toml"
+  defaultPrompt = """You are a command generation engine.
+
+Task:
+Convert natural language into a single executable command for {{shell}}.
+
+Output rules:
+1. Output ONLY the command. No explanations, no comments, no extra text.
+2. Output must be a single line (no LF or CRLF).
+3. Do not use code blocks or formatting.
+4. Do not output placeholders or examples.
+5. If conversion is impossible or unsafe, output exactly: Unable to convert
+6. Output will be executed directly. Ensure no leading/trailing whitespace or hidden characters.
+
+Execution environment:
+- Shell: {{shell}} v{{shell_version}}
+- Operating System: {{os}}
+- Working Directory: {{pwd}}
+- User: {{user}}
+- Available tools: {{tools}}
+
+Constraints:
+- Must be compatible with the specified shell and OS.
+- Prefer minimal and direct commands.
+- Avoid interactive commands unless explicitly requested.
+- Avoid destructive operations unless explicitly requested.
+"""
 
 
 type
@@ -123,7 +150,7 @@ proc loadConfig*(filename: string) =
   config.file = filePath
   config.proxy = data.getStr("proxy", "")
   config.version = data.getStr("version")
-  config.prompt = data.getStr("prompt", "")
+  config.prompt = data.getStr("prompt", defaultPrompt)
   if not data.hasKey("provider"):
     raise newException(ValueError, "Missing 'provider' section in config file")
   let provider = data["provider"]
