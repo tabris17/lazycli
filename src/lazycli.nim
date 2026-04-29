@@ -101,7 +101,9 @@ proc main() =
     of "init":
       let shell = opts.init.get.shell
       if shell in importedShells:
-        echo shellScripts[shell]
+        echo shellScripts[shell].render({
+          "lazycli": getAppFilename(),
+        }.toTable)
       else:
         raise newException(ValueError, "Unsupported shell: " & shell)
     of "query":

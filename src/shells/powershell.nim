@@ -19,7 +19,7 @@ Set-PSReadLineKeyHandler -Key F1 -LongDescription "AI Command Helper" -ScriptBlo
             "--shell=powershell,$version",
             'query', $lineText
         )
-        lazycli @args
+        {{lazycli}} @args
     } -ArgumentList $line
 
     while ($job.State -eq 'Running') {
