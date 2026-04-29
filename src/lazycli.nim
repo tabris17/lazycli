@@ -27,7 +27,7 @@ proc prompt(msg: string, default = ""): string {.inline.} =
   if default.len > 0:
     stdout.write(msg & " [" & default & "]: ")
   else:
-    stdout.write(msg)
+    stdout.write(msg & ": ")
   stdout.flushFile()
 
   let input = stdin.readLine().strip()
@@ -119,10 +119,10 @@ proc main() =
         of "init":
           echo "Please enter LLM provider details"
           let provider = Provider(
-            name: prompt("name: "),
-            baseUrl: prompt("base url: "),
-            apiKey: prompt("api key: "),
-            model: prompt("model: ")
+            name: prompt("name"),
+            baseUrl: prompt("base url"),
+            apiKey: prompt("api key"),
+            model: prompt("model")
           )
           initConfig(opts.config, provider, opts.init.get.force)
           echo "Config file initialized at: " & config.get(file)
