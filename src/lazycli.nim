@@ -3,6 +3,7 @@ import argparse
 import ./backend
 import ./config
 import ./shells
+import ./utils
 import ./version
 
 
@@ -140,6 +141,10 @@ proc main() =
           echo config.findFile(opts.config)
     else:
       echo argParser.help
+      echo "Environments:"
+      echo "  os\t\t" & getPlatform()
+      echo "  user\t\t" & getUsername()
+      echo "  pwd\t\t" & getCurrentDir()
 
 
 when isMainModule:

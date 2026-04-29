@@ -1,5 +1,6 @@
 import std/[os, tables]
 
+
 when defined(windows):
   import std/winlean
 
@@ -19,8 +20,16 @@ when defined(windows):
 
   proc RtlGetVersion*(lpVersionInformation: POSVERSIONINFOW): NTSTATUS
     {.stdcall, dynlib: "ntdll", importc.}
-else:
+
+
+when defined(linux):
+  import std/parsecfg
+elif defined(macosx):
   import std/posix
+  proc sysctlbyname(name: cstring, oldp: pointer, oldlenp: ptr csize_t, newp: pointer, newlen: csize_t): cint
+    {.importc, header: "<sys/sysctl.h>".}
+elif defined(posix):
+  import std/[posix, posix_utils]
 
 
 func render*(tpl: string, values: Table[string, string]): string =
@@ -63,6 +72,7 @@ proc getUsername*(): string =
     else:
       getEnv("LOGNAME")
 
+
 proc getPlatform*(): string =
   when defined(windows):
     var info: OSVERSIONINFOW
@@ -74,5 +84,23 @@ proc getPlatform*(): string =
       hostOS & " " & $major & "." & $minor & " build " & $build
     else:
       hostOS
+  elif defined(linux):
+    if fileExists("/etc/os-release"):
+      let cfg = loadConfig("/etc/os-release")
+      cfg.getSectionValue("", "PRETTY_NAME")
+    else:
+      hostOS
+  elif defined(macosx):
+    var size: csize_t = 0
+    if sysctlbyname("kern.osproductversion", nil, size.addr, nil, 0) == 0:
+      var buf = newString(size.uint)
+      if sysctlbyname("kern.osproductversion", buf.cstring, size.addr, nil, 0) == 0:
+        hostOS & " " & buf.strip(chars = {'\0'})
+      else:
+        hostOS
+    else:
+      hostOS
+  elif defined(posix):
+    hostOS & " " & uname().release
   else:
     hostOS
