@@ -73,7 +73,6 @@ proc query*(text: string): string =
     "user": getUsername(),
     "tools": ""
   }.toTable)
-  echo prompt
 
   let response = httpClient.request(
     url = provider.baseUrl.toFullUrl,
