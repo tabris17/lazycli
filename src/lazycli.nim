@@ -16,6 +16,7 @@ importShells do (name: string, script: string):
 const
   helpText = "print this help"
   shellHelp = "choices: " & importedShells.join("\n")
+  configHelp = "specify the config file"
   mainHelp = fmt"""Natural Language to Shell Commands
 Name:     {appName}
 Version:  {buildVersion}
@@ -54,14 +55,15 @@ let argParser = newParser(appName):
       help("Query command")
       nohelpflag()
       flag("-h", "--help", help=helpText, shortcircuit=true, hidden = true)
-      option("-c", "--config", help="config file")
-      option("-p", "--proxy", help="set a proxy to use")
+      option("-c", "--config", help=configHelp)
+      option("-p", "--proxy", help="specify the proxy url (overrides config and environment variables)")
+      option("-s", "--shell", help="specify the shell name and version", required=true)
       arg("text", help="Text to query")
     command("config"):
       help("Manage config")
       nohelpflag()
       flag("-h", "--help", help=helpText, shortcircuit=true, hidden = true)
-      option("-c", "--config", help="config file")
+      option("-c", "--config", help=configHelp)
       command("init"):
         help("Initialize config file")
         nohelpflag()
@@ -99,6 +101,10 @@ proc main() =
       loadConfig(opts.config)
       if opts.proxy_opt.isSome:
         proxyUrl = opts.proxy
+      let shellInfo = opts.shell.split(",", 2)
+      if shellInfo.len < 2:
+        raise newException(ValueError, "Parameter 'shell' must be in the format 'name,version'")
+      config.set(shell, Shell(name: shellInfo[0], version: shellInfo[1]))
       echo backend.query(opts.text)
     of "config":
       let opts = opts.config.get

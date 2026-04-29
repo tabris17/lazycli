@@ -1,11 +1,39 @@
-import std/[envvars, httpclient, json, strutils, uri]
+import std/[envvars, httpclient, json, os, strutils, tables, uri]
 import ./config
+import ./utils
 
 
 var proxyUrl* = ""
 
 
-const entryPoint = "/chat/completions"
+const
+  entryPoint = "/chat/completions"
+  defaultPrompt = """You are a command generation engine.
+
+Task:
+Convert natural language into a single executable command for {{shell}}.
+
+Output rules:
+1. Output ONLY the command. No explanations, no comments, no extra text.
+2. Output must be a single line (no LF or CRLF).
+3. Do not use code blocks or formatting.
+4. Do not output placeholders or examples.
+5. If conversion is impossible or unsafe, output exactly: Unable to convert
+6. Output will be executed directly. Ensure no leading/trailing whitespace or hidden characters.
+
+Execution environment:
+- Shell: {{shell}} v{{shell_version}}
+- Operating System: {{os}}
+- Working Directory: {{pwd}}
+- User: {{user}}
+- Available tools: {{tools}}
+
+Constraints:
+- Must be compatible with the specified shell and OS.
+- Prefer minimal and direct commands.
+- Avoid interactive commands unless explicitly requested.
+- Avoid destructive operations unless explicitly requested.
+"""
 
 
 proc toFullUrl(baseUrl: string): string {.inline.} =
@@ -37,6 +65,15 @@ proc query*(text: string): string =
   let provider = config.get(provider)
   let isHttpsUrl = parseUri(provider.baseUrl).scheme == "https"
   let httpClient = newHttpClient(proxy = createProxy(isHttpsUrl))
+  let promptTpl = if config.get(prompt).len > 0: config.get(prompt) else: defaultPrompt
+  let prompt = promptTpl.render({
+    "os": getPlatform(),
+    "shell": config.get(shell).name, "shell_version": config.get(shell).version, 
+    "pwd": getCurrentDir(), 
+    "user": getUsername(),
+    "tools": ""
+  }.toTable)
+  echo prompt
 
   let response = httpClient.request(
     url = provider.baseUrl.toFullUrl,
@@ -51,10 +88,10 @@ proc query*(text: string): string =
       "temperature": 0,
       "thinking": {"type": "disabled"}, # Deepseek-specific parameter to disable thinking time
       "messages": [
-        {"role": "system", "content": "你是一个将自然语言直接转换为 PowerShell 命令的转换器，只输出可执行的 PowerShell 命令本身，不要任何解释、格式、注释或多余内容。命令必须是一行。"},
+        {"role": "system", "content": prompt},
         {"role": "user", "content": text}
       ],
-      # "max_tokens": 500,
+      # "max_tokens": config.get(tokenLimit),
     })
   )
 

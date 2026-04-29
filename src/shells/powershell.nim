@@ -1,5 +1,6 @@
 const script* = """
 Set-PSReadLineKeyHandler -Key F1 -LongDescription "AI Command Helper" -ScriptBlock {
+    $version = $PSVersionTable.PSVersion.ToString()
     $line = ""
     $cursor = 0
     [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
@@ -15,8 +16,8 @@ Set-PSReadLineKeyHandler -Key F1 -LongDescription "AI Command Helper" -ScriptBlo
     $job = Start-Job -ScriptBlock {
         param($lineText)
         $args = @(
-            'query',
-            $lineText
+            "--shell=powershell,$version",
+            'query', $lineText
         )
         lazycli @args
     } -ArgumentList $line

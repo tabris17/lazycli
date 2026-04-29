@@ -13,11 +13,17 @@ type
     apiKey*: string
     model*: string
 
+  Shell* = object
+    name*: string
+    version*: string
+
   Config = object
     file: string
     version: string
     proxy: string
     provider: Provider
+    shell: Shell
+    prompt: string
 
 
 var config: Config
@@ -79,6 +85,7 @@ template toTomlString(config: Config): string =
   let toml = newTTable()
   toml["version"] = newTString(config.version)
   toml["proxy"] = newTString(config.proxy)
+  toml["prompt"] = newTString(config.prompt)
   let provider = newTTable()
   toml["provider"] = provider
   provider["name"] = newTString(config.provider.name)
@@ -116,6 +123,7 @@ proc loadConfig*(filename: string) =
   config.file = filePath
   config.proxy = data.getStr("proxy", "")
   config.version = data.getStr("version")
+  config.prompt = data.getStr("prompt", "")
   if not data.hasKey("provider"):
     raise newException(ValueError, "Missing 'provider' section in config file")
   let provider = data["provider"]
