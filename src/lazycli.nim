@@ -128,7 +128,7 @@ proc main() =
           echo "Config file initialized at: " & config.get(file)
         of "show":
           loadConfig(opts.config)
-          info("Config file", config.get(file))
+          info("file", config.get(file))
           info("version", config.get(version))
           info("prompt", config.get(prompt))
           info("proxy", config.get(proxy))
