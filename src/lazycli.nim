@@ -1,4 +1,4 @@
-import std/[cmdline, strformat, strutils, tables, terminal]
+import std/[cmdline, macros, rdstdin, strformat, strutils, tables, terminal]
 import argparse
 import ./backend
 import ./config
@@ -24,17 +24,6 @@ Version:  {buildVersion}
 Homepage: {homepage}"""
 
 
-proc prompt(msg: string, default = ""): string {.inline.} =
-  if default.len > 0:
-    stdout.write(msg & " [" & default & "]: ")
-  else:
-    stdout.write(msg & ": ")
-  stdout.flushFile()
-
-  let input = stdin.readLine().strip()
-  result = if input.len > 0: input else: default
-
-
 proc error(msg: string) {.inline.} = 
   setForegroundColor(fgRed)
   stderr.write "Error: "
@@ -42,11 +31,21 @@ proc error(msg: string) {.inline.} =
   stderr.writeLine msg
 
 
-proc info(label, text: string) {.inline.} =
-  setForegroundColor(fgCyan)
-  stdout.write label & ": "
-  resetAttributes()
-  stdout.writeLine text
+macro printTable(alignWidth: int, content: untyped): untyped =
+  result = newStmtList()
+  for kv in content:
+    let key = kv[0]
+    let val = kv[1]
+
+    result.add quote do:
+      setForegroundColor(fgCyan)
+      stdout.write `key` & ":".alignLeft(`alignWidth` - `key`.len)
+      resetAttributes()
+      stdout.writeLine `val`
+
+
+template tryReadLineFromStdin(prompt: string, default = ""): string =
+  try: readLineFromStdin(prompt) except: default
 
 
 let argParser = newParser(appName):
@@ -125,23 +124,24 @@ proc main() =
         of "init":
           echo "Please enter LLM provider details"
           let provider = Provider(
-            name: prompt("name"),
-            baseUrl: prompt("base url"),
-            apiKey: prompt("api key"),
-            model: prompt("model")
+            name: readLineFromStdin("name: "),
+            baseUrl: readLineFromStdin("base url: "),
+            apiKey: readLineFromStdin("api key: "),
+            model: readLineFromStdin("model: ")
           )
           initConfig(opts.config, provider, opts.init.get.force)
           echo "Config file initialized at: " & config.get(file)
         of "show":
           loadConfig(opts.config)
-          info("file", config.get(file))
-          info("version", config.get(version))
-          info("prompt", config.get(prompt))
-          info("proxy", config.get(proxy))
-          info("provider.name", config.get(provider).name)
-          info("provider.base_url", config.get(provider).baseUrl)
-          info("provider.api_key", config.get(provider).apiKey)
-          info("provider.model", config.get(provider).model)
+          printTable(20):
+            "file": config.get(file)
+            "version": config.get(version)
+            "prompt": config.get(prompt)
+            "proxy": config.get(proxy)
+            "provider.name": config.get(provider).name
+            "provider.base_url": config.get(provider).baseUrl
+            "provider.api_key": config.get(provider).apiKey
+            "provider.model": config.get(provider).model
         else:
           echo config.findFile(opts.config)
     else:
