@@ -16,7 +16,7 @@ importShells do (name: string, script: string):
 
 const
   helpText = "print this help"
-  shellHelp = "choices: " & importedShells.join("\n")
+  shellHelp = "choices: " & importedShells.join(", ")
   configHelp = "specify the config file"
   mainHelp = fmt"""Natural Language to Shell Commands
 Name:     {appName}
