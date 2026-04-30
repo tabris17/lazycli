@@ -106,7 +106,7 @@ proc main() =
       if shell in importedShells:
         echo shellScripts[shell].render({
           "lazycli": if usePosixPath: getAppFilename().replace("\\", "/") else: getAppFilename(),
-          "config": opts.config
+          "config": if usePosixPath: opts.config.replace("\\", "/") else: opts.config
         }.toTable)
       else:
         raise newException(ValueError, "Unsupported shell: " & shell)
