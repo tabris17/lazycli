@@ -57,6 +57,7 @@ let argParser = newParser(appName):
       help("Generate the shell init script")
       nohelpflag()
       flag("-h", "--help", help=helpText, shortcircuit=true, hidden = true)
+      flag("", "--posix-path", help="use posix path separators in the generated script")
       option("-c", "--config", help=configHelp)
       arg("shell", help=shellHelp)
     command("query"):
@@ -101,9 +102,10 @@ proc main() =
     of "init":
       let opts = opts.init.get
       let shell = opts.shell
+      let usePosixPath = opts.posix_path
       if shell in importedShells:
         echo shellScripts[shell].render({
-          "lazycli": getAppFilename(),
+          "lazycli": if usePosixPath: getAppFilename().replace("\\", "/") else: getAppFilename(),
           "config": opts.config
         }.toTable)
       else:
