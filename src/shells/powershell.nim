@@ -1,5 +1,5 @@
 const script* = """
-Set-PSReadLineKeyHandler -Key F1 -LongDescription "AI Command Helper" -ScriptBlock {
+Set-PSReadLineKeyHandler -Key F1 -LongDescription "lazycli" -ScriptBlock {
     $version = $PSVersionTable.PSVersion.ToString()
     $line = ""
     $cursor = 0
