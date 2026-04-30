@@ -2,22 +2,17 @@
 
 [[简体中文](docs/README.zh_CN.md)]
 
-A cross-platform command-line tool that translates natural language input into executable shell commands using LLMs.
+A cross-platform command-line tool that converts natural language into shell commands using LLMs.
 
----
-
-## Overview
-
-This project provides a CLI wrapper that captures user intent in natural language and converts it into valid shell commands via an LLM backend. It supports multiple platforms and can be integrated into common shells (bash, zsh, fish, PowerShell).
+It bridges user intent and the shell environment by generating commands through an LLM backend and requiring explicit user confirmation before execution for safety.
 
 ## Features
 
-- Cross-platform support (Windows, Linux, macOS, *BSD)
-- Natural language to shell command translation
-- Pluggable LLM backend support
+- Cross-platform support (Windows, Linux, macOS, BSD)
+- Compatible with multiple shells (bash, fish, nushell, zsh, PowerShell)
+- Flexible LLM backend support via OpenAI-compatible APIs
 - Configurable prompt templates
-- Optional command preview before execution
-- Safety guardrails for dangerous operations
+- Interactive command confirmation before execution
 
 ## Installation
 
@@ -26,15 +21,61 @@ This project provides a CLI wrapper that captures user intent in natural languag
 ```shell
 git clone https://github.com/tabris17/lazycli
 cd lazycli
+nimble setup
 nimble release
 ```
 
 ### Download
 
-the latest release from:
+Get the latest release from:
 
 ```text
 https://github.com/tabris17/lazycli/releases
+```
+
+## Integration
+
+Configure your shell to initialize lazycli. Select yours from the list below:
+
+### Bash
+
+Add the following to the end of `~/.bashrc`:
+
+```bash
+eval "$(lazycli init bash)"
+```
+
+### Fish
+
+Add the following to the end of `~/.config/fish/config.fish`:
+
+```fish
+lazycli init fish | source
+```
+
+### Nushell
+
+Run script blow:
+
+```nushell
+mkdir ($nu.data-dir | path join "vendor/autoload")
+lazycli init nushell | save -f ($nu.data-dir | path join "vendor/autoload/lazycli.nu")
+```
+
+### PowerShell
+
+Add the following to the end of your PowerShell configuration (find it by running `$PROFILE`):
+
+```powershell
+Invoke-Expression (&lazycli init powershell)
+```
+
+### Zsh
+
+Add the following to the end of `~/.zshrc`:
+
+```zsh
+eval "$(lazycli init zsh)"
 ```
 
 ## Usage
