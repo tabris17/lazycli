@@ -2,17 +2,16 @@
 
 [[简体中文](docs/README.zh_CN.md)]
 
-A cross-platform command-line tool that converts natural language into shell commands using LLMs.
-
-It bridges user intent and the shell environment by generating commands through an LLM backend and requiring explicit user confirmation before execution for safety.
+A cross-platform command-line tool that converts natural language into shell commands using LLMs, bridging user intent and the shell environment with explicit user confirmation before execution for safety.
 
 ## Features
 
 - Cross-platform support (Windows, Linux, macOS, BSD)
-- Compatible with multiple shells (bash, fish, nushell, zsh, PowerShell)
+- Works seamlessly across popular shells (bash, fish, nushell, zsh, PowerShell)
 - Flexible LLM backend support via OpenAI-compatible APIs
 - Configurable prompt templates
 - Interactive command confirmation before execution
+- Lightweight and token-efficient for low-cost usage
 
 ## Installation
 
@@ -55,7 +54,7 @@ lazycli init fish | source
 
 ### Nushell
 
-Run script blow:
+Run the following code in nushell:
 
 ```nushell
 mkdir ($nu.data-dir | path join "vendor/autoload")
@@ -64,10 +63,10 @@ lazycli init nushell | save -f ($nu.data-dir | path join "vendor/autoload/lazycl
 
 ### PowerShell
 
-Add the following to the end of your PowerShell configuration (find it by running `$PROFILE`):
+Add the following to the end of your PowerShell profile, which you can open by running `notepad $PROFILE`:
 
 ```powershell
-Invoke-Expression (&lazycli init powershell)
+Invoke-Expression (& { lazycli init powershell | Out-String })
 ```
 
 ### Zsh
@@ -78,7 +77,39 @@ Add the following to the end of `~/.zshrc`:
 eval "$(lazycli init zsh)"
 ```
 
+### Advanced
+
+`lazy init` supports the following options:
+
+- `--config`: Specifies the configuration file to use
+- `--posix-path`: Forces the init shell script to use POSIX path separators. Useful for portable versions of Bash running on Windows
+
 ## Usage
+
+```text
+Natural Language to Shell Commands
+Name:     lazycli
+Version:  0.1.0
+Homepage: https://github.com/tabris17/lazycli
+
+Usage:
+  lazycli [options] COMMAND
+
+Commands:
+
+  init             Generate the shell init script
+  query            Query command
+  config           Manage config
+
+Options:
+  -h, --help                 print this help
+  -v, --version              print version and exit
+
+Environments:
+  os            Ubuntu 24.04.3 LTS
+  user          fournoas
+  pwd           /home/fournoas/.local/bin
+```
 
 ## Configuration File
 
