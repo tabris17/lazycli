@@ -86,37 +86,26 @@ eval "$(lazycli init zsh)"
 
 ## Usage
 
-```text
-Natural Language to Shell Commands
-Name:     lazycli
-Version:  0.1.0
-Homepage: https://github.com/tabris17/lazycli
+First, initialize the configuration file using the following command:
 
-Usage:
-  lazycli [options] COMMAND
-
-Commands:
-
-  init             Generate the shell init script
-  query            Query command
-  config           Manage config
-
-Options:
-  -h, --help                 print this help
-  -v, --version              print version and exit
-
-Environments:
-  os            Ubuntu 24.04.3 LTS
-  user          fournoas
-  pwd           /home/fournoas/.local/bin
+```shell
+lazycli config init
 ```
 
-## Configuration File
+Follow the prompts to complete the setup step by step. To overwrite an existing configuration, use the `--force` option.
 
-Default location:
+Make sure your shell has loaded the initialization script. At the command prompt, type a natural language description of the command you want to execute. For example: `list all files`.
+
+Then press the configured hotkey (default is <kbd>F1</kbd>) to invoke lazycli. After the command is processed, the content at the command prompt will be automatically replaced with an executable shell command.
+
+## Configuration
+
+Default configuration file locations:
 
 - Linux/macOS: `~/.config/lazycli/config.toml`
 - Windows: `%USERPROFILE%\.config\lazycli\config.toml`
+
+You can also run `lazycli config` to locate the configuration file path.
 
 ## Supported LLM Backends
 
