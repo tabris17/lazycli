@@ -27,20 +27,20 @@ proc createProxy(preferHttps: bool): Proxy {.inline.} =
     testUrl(proxyUrl)
     testUrl(getEnv("https_proxy"))
     testUrl(getEnv("http_proxy"))
-    testUrl(config.get(proxy))
+    testUrl(getConfig(proxy))
   else:
     testUrl(proxyUrl)
     testUrl(getEnv("http_proxy"))
-    testUrl(config.get(proxy))
+    testUrl(getConfig(proxy))
 
 
 proc query*(text: string): string =
-  let provider = config.get(provider)
+  let provider = getConfig(provider)
   let isHttpsUrl = parseUri(provider.baseUrl).scheme == "https"
   let httpClient = newHttpClient(proxy = createProxy(isHttpsUrl))
-  let prompt = config.get(prompt).render({
+  let prompt = getConfig(prompt).render({
     "os": getPlatform(),
-    "shell": config.get(shell).name, "shell_version": config.get(shell).version, 
+    "shell": getConfig(shell).name, "shell_version": getConfig(shell).version, 
     "pwd": getCurrentDir(), 
     "user": getUsername(),
     "tools": ""
@@ -62,7 +62,7 @@ proc query*(text: string): string =
         {"role": "system", "content": prompt},
         {"role": "user", "content": text}
       ],
-      # "max_tokens": config.get(tokenLimit),
+      # "max_tokens": getConfig(tokenLimit),
     })
   )
 

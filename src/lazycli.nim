@@ -2,6 +2,7 @@ import std/[cmdline, macros, rdstdin, strformat, strutils, tables, terminal]
 import argparse
 import ./backend
 import ./config
+import ./keybinding
 import ./shells
 import ./utils
 import ./version
@@ -118,7 +119,7 @@ proc main() =
       let shellInfo = opts.shell.split(",", 2)
       if shellInfo.len < 2:
         raise newException(ValueError, "Parameter 'shell' must be in the format 'name,version'")
-      config.set(shell, Shell(name: shellInfo[0], version: shellInfo[1]))
+      setConfig(shell, Shell(name: shellInfo[0], version: shellInfo[1]))
       echo backend.query(opts.text)
     of "config":
       let opts = opts.config.get
@@ -132,20 +133,21 @@ proc main() =
             model: readLineFromStdin("model: ")
           )
           initConfig(opts.config, provider, opts.init.get.force)
-          echo "Config file initialized at: " & config.get(file)
+          echo "Config file initialized at: " & getConfig(file)
         of "show":
           loadConfig(opts.config)
           printTable(20):
-            "file": config.get(file)
-            "version": config.get(version)
-            "prompt": config.get(prompt)
-            "proxy": config.get(proxy)
-            "provider.name": config.get(provider).name
-            "provider.base_url": config.get(provider).baseUrl
-            "provider.api_key": config.get(provider).apiKey
-            "provider.model": config.get(provider).model
+            "file": getConfig(file)
+            "version": getConfig(version)
+            "prompt": getConfig(prompt)
+            "proxy": getConfig(proxy)
+            "key_binding": $getConfig(keyBinding)
+            "provider.name": getConfig(provider).name
+            "provider.base_url": getConfig(provider).baseUrl
+            "provider.api_key": getConfig(provider).apiKey
+            "provider.model": getConfig(provider).model
         else:
-          echo config.findFile(opts.config)
+          echo findConfigFile(opts.config)
     else:
       echo argParser.help
       echo "Environments:"

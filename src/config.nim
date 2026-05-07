@@ -1,10 +1,12 @@
 import std/[os, macros, uri]
 import parsetoml
+import ./keybinding
 import ./version
 
 
 const
   defaultConfigFile = "config.toml"
+  defaultKeyBinding = "F1"
   defaultPrompt = """You are a command generation engine.
 
 Task:
@@ -51,22 +53,23 @@ type
     provider: Provider
     shell: Shell
     prompt: string
+    keyBinding: KeyBinding
 
 
 var config: Config
 
 
-macro get*(key: untyped): untyped =
+macro getConfig*(key: untyped): untyped =
   result = quote do:
     config.`key`
 
 
-macro set*(key: untyped, value: untyped): untyped =
+macro setConfig*(key: untyped, value: untyped): untyped =
   result = quote do:
     config.`key` = `value`
 
 
-macro read*(key: string): untyped =
+macro readConfig*(key: string): untyped =
   let t = getTypeInst(Config)
   var caseStmt = newNimNode(nnkCaseStmt)
   caseStmt.add key
@@ -92,7 +95,7 @@ macro read*(key: string): untyped =
   result = caseStmt
 
 
-proc findFile*(filename: string): string {.inline.} =
+proc findConfigFile*(filename: string): string {.inline.} =
   if filename.len == 0:
     for path in [
       joinPath(getCurrentDir(), defaultConfigFile),
@@ -113,6 +116,7 @@ template toTomlString(config: Config): string =
   toml["version"] = newTString(config.version)
   toml["proxy"] = newTString(config.proxy)
   toml["prompt"] = newTString(config.prompt)
+  toml["key_binding"] = newTString($config.keyBinding)
   let provider = newTTable()
   toml["provider"] = provider
   provider["name"] = newTString(config.provider.name)
@@ -145,12 +149,13 @@ proc isValidUrl(url: string): bool =
 
 
 proc loadConfig*(filename: string) =
-  let filePath = findFile(filename)
+  let filePath = findConfigFile(filename)
   let data = parsetoml.parseFile(filePath)
   config.file = filePath
   config.proxy = data.getStr("proxy", "")
   config.version = data.getStr("version")
   config.prompt = data.getStr("prompt", defaultPrompt)
+  config.keyBinding = data.getStr("key_binding", defaultKeyBinding).parseKeyBinding()
   if not data.hasKey("provider"):
     raise newException(ValueError, "Missing 'provider' section in config file")
   let provider = data["provider"]
