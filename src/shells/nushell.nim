@@ -1,3 +1,4 @@
+import std/[enumutils, strformat, strutils]
 import ../keybinding
 
 
@@ -24,8 +25,7 @@ def query_lazycli [] {
 $env.config.keybindings ++= [
   {
     name: lazycli
-    modifier: none
-    keycode: {{key}}
+    {{key}}
     mode: emacs
     event: {
       send: executehostcommand
@@ -37,4 +37,31 @@ $env.config.keybindings ++= [
 
 
 proc bindKey*(keyBinding: KeyBinding): string =
-  "f1"
+  var modifiers: seq[string] = @[]
+
+  for m in [Alt, Super, Shift]:
+    if m in keyBinding.modifiers:
+      modifiers.add m.symbolName().toLowerAscii()
+
+  if Ctrl in keyBinding.modifiers:
+    modifiers.add "control"
+
+  let modifiersLiteral = 
+    case modifiers.len:
+      of 0:
+        "none"
+      of 1:
+        modifiers[0]
+      else:
+        "[ " & modifiers.join(" ") & " ]"
+
+  let keyCode = 
+    if keyBinding.key == Key.Char:
+      if keyBinding.ch == '\\':
+        "char_\\\\"
+      else:
+        "char_" & $keyBinding.ch
+    else:
+      keyBinding.key.symbolName().toLowerAscii()
+
+  fmt"modifier: {modifiersLiteral}{'\n'}    keycode: {keyCode}"
