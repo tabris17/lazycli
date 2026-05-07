@@ -1,4 +1,7 @@
-const script* = """
+import ../keybinding
+
+
+const initScript* = """
 def query_lazycli [] {
   let ver = (version).version
   let line = (commandline)
@@ -22,7 +25,7 @@ $env.config.keybindings ++= [
   {
     name: lazycli
     modifier: none
-    keycode: f1
+    keycode: {{key}}
     mode: emacs
     event: {
       send: executehostcommand
@@ -31,3 +34,7 @@ $env.config.keybindings ++= [
   }
 ]
 """
+
+
+proc bindKey*(keyBinding: KeyBinding): string =
+  "f1"

@@ -8,13 +8,6 @@ import ./utils
 import ./version
 
 
-var shellScripts = initTable[string, string]()
-
-
-importShells do (name: string, script: string):
-  shellScripts[name] = script
-
-
 const
   helpText = "print this help"
   shellHelp = "choices: " & importedShells.join(", ")
@@ -105,9 +98,12 @@ proc main() =
       let shell = opts.shell
       let usePosixPath = opts.posix_path
       if shell in importedShells:
-        echo shellScripts[shell].render({
+        let shellDescriptor = shellRegistry[shell]
+        loadConfig(opts.config)
+        echo shellDescriptor.initScript.render({
           "lazycli": if usePosixPath: getAppFilename().replace("\\", "/") else: getAppFilename(),
-          "config": if usePosixPath: opts.config.replace("\\", "/") else: opts.config
+          "config": if usePosixPath: opts.config.replace("\\", "/") else: opts.config,
+          "key": shellDescriptor.bindKey(getConfig(keyBinding)),
         }.toTable)
       else:
         raise newException(ValueError, "Unsupported shell: " & shell)

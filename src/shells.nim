@@ -1,7 +1,19 @@
-import std/[os, macros, strutils]
+import std/[os, macros, strutils, tables]
+import ./keybinding
 
 
-macro importShells*(register: untyped): untyped =
+type
+  BindKeyProc = proc (keyBinding: KeyBinding): string
+
+  ShellDescriptor = object
+    initScript*: string
+    bindKey*: BindKeyProc
+
+
+var shellRegistry* = initTable[string, ShellDescriptor]()
+
+
+macro importShells(register: untyped): untyped =
   result = newStmtList()
   
   var modules: seq[string] = @[]
@@ -13,7 +25,8 @@ macro importShells*(register: untyped): untyped =
 
     let module = path.splitFile().name
     let modFullName = dir & "/" & module
-    let modScript = newDotExpr(ident(module), ident("script"))
+    let modInitScript = newDotExpr(ident(module), ident("initScript"))
+    let modBindKey = newDotExpr(ident(module), ident("bindKey"))
 
     modules.add(module)
 
@@ -21,6 +34,16 @@ macro importShells*(register: untyped): untyped =
       import `modFullName`
       static: echo "imported: ", `modFullName`
 
-    result.add newCall(register, newLit(module), modScript)
+    result.add newCall(register, newLit(module), modInitScript, modBindKey)
 
-  result.add newConstStmt(ident("importedShells"), newLit(modules))
+  result.add newConstStmt(
+    nnkPostfix.newTree(ident("*"), ident("importedShells")), 
+    newLit(modules)
+  )
+
+
+importShells do (name: string, initScript: string, bindKey: BindKeyProc):
+  shellRegistry[name] = ShellDescriptor(
+    initScript: initScript,
+    bindKey: bindKey
+  )

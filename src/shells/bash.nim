@@ -1,4 +1,7 @@
-const script* = """
+import ../keybinding
+
+
+const initScript* = """
 lazycli_query() {
   local line="$READLINE_LINE"
 
@@ -24,5 +27,9 @@ lazycli_query() {
   READLINE_POINT=${#READLINE_LINE}
 }
 
-bind -x '"\eOP":lazycli_query'
+bind -x '"{{key}}":lazycli_query'
 """
+
+
+proc bindKey*(keyBinding: KeyBinding): string =
+  "\\eOP"

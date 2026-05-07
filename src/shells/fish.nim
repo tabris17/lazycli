@@ -1,4 +1,7 @@
-const script* = """
+import ../keybinding
+
+
+const initScript* = """
 function lazycli_query
   set line (commandline)
   if test -z (string trim -- $line)
@@ -22,5 +25,9 @@ function lazycli_query
   commandline -r "$result"
 end
 
-bind -k f1 lazycli_query
+bind -k {{key}} lazycli_query
 """
+
+
+proc bindKey*(keyBinding: KeyBinding): string =
+  "f1"

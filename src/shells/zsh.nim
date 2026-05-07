@@ -1,4 +1,7 @@
-const script* = """
+import ../keybinding
+
+
+const initScript* = """
 lazycli_query() {
   emulate -L zsh
 
@@ -36,5 +39,9 @@ lazycli_query() {
 
 zle -N lazycli_query
 
-bindkey "${terminfo[kf1]}" lazycli_query
+bindkey "${terminfo[k{{key}}]}" lazycli_query
 """
+
+
+proc bindKey*(keyBinding: KeyBinding): string =
+  "f1"
