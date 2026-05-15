@@ -4,9 +4,18 @@ import std/[os, tables]
 when defined(windows):
   import std/winlean
 
+  const
+    LOCALE_NAME_MAX_LENGTH = 85
+    LOCALE_USER_DEFAULT = 0x0400
+    LOCALE_SISO3166CTRYNAME = 0x0000005a
+    LOCALE_SISO639LANGNAME = 0x00000059
+
   type
     WCHAR = uint16
     NTSTATUS = int32
+    LCID = int32
+    LCTYPE = int32
+    LPWSTR = ptr WCHAR
     
     OSVERSIONINFOW = object
       dwOSVersionInfoSize: ULONG
@@ -20,6 +29,9 @@ when defined(windows):
 
   proc RtlGetVersion*(lpVersionInformation: POSVERSIONINFOW): NTSTATUS
     {.stdcall, dynlib: "ntdll", importc.}
+
+  proc GetLocaleInfoW*(Locale: LCID, LCType: LCTYPE, lpLCData: LPWSTR, cchData: int32): int32
+    {.stdcall, dynlib: "kernel32", importc.}
 
 
 when defined(linux):
@@ -104,3 +116,14 @@ proc getPlatform*(): string =
     hostOS & " " & uname().release
   else:
     hostOS
+
+
+proc getLocale*(): string =
+  when defined(windows):
+    var buf: array[LOCALE_NAME_MAX_LENGTH, WCHAR]
+    if GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, buf[0].addr, LOCALE_NAME_MAX_LENGTH) > 0:
+      result = $cast[WideCString](buf.addr)
+      if GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, buf[0].addr, LOCALE_NAME_MAX_LENGTH) > 0:
+        result &= "_" & $cast[WideCString](buf.addr)
+  else:
+    return getEnv("LANG")

@@ -1,4 +1,4 @@
-import std/[envvars, httpclient, json, os, strutils, tables, uri]
+import std/[envvars, httpclient, json, os, strutils, tables, times, uri]
 import ./config
 import ./utils
 
@@ -40,11 +40,16 @@ proc query*(text: string): string =
   let httpClient = newHttpClient(proxy = createProxy(isHttpsUrl))
   let prompt = getConfig(prompt).render({
     "os": getPlatform(),
-    "shell": getConfig(shell).name, "shell_version": getConfig(shell).version, 
+    "shell": getConfig(shell).name,
+    "shell_version": getConfig(shell).version,
+    "locale": getLocale(),
+    "datetime": $now(),
     "pwd": getCurrentDir(), 
     "user": getUsername(),
-    "tools": ""
+    "tools": "",
+    "path_separator": $DirSep,
   }.toTable)
+  echo prompt
 
   let response = httpClient.request(
     url = provider.baseUrl.toFullUrl,
