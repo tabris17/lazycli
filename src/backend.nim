@@ -49,7 +49,6 @@ proc query*(text: string): string =
     "tools": "",
     "path_separator": $DirSep,
   }.toTable)
-  echo prompt
 
   let response = httpClient.request(
     url = provider.baseUrl.toFullUrl,
