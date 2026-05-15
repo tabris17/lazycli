@@ -20,8 +20,8 @@ Set-PSReadLineKeyHandler -Key {{key}} -LongDescription "lazycli" -ScriptBlock {
     $job = Start-Job -ScriptBlock {
         param($lineText)
         $args = @(
-            'query',
-            "--shell=powershell,$version",
+            'query'
+            "--shell=powershell,$version"
             '--config={{config}}'
             $lineText
         )
