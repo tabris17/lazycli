@@ -4,41 +4,43 @@ import ../keybinding
 
 const initScript* = """
 Set-PSReadLineKeyHandler -Key {{key}} -LongDescription "lazycli" -ScriptBlock {
-    $version = $PSVersionTable.PSVersion.ToString()
-    $line = ""
-    $cursor = 0
-    [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
-    if ([string]::IsNullOrWhiteSpace($line)) {
+  $readline = [Microsoft.PowerShell.PSConsoleReadLine]
+  $version = $PSVersionTable.PSVersion.ToString()
+
+  $line = ""
+  $cursor = 0
+
+  $readline::GetBufferState([ref]$line, [ref]$cursor)
+  if ([string]::IsNullOrWhiteSpace($line)) {
+    return
+  }
+
+  try {
+    $readline::RevertLine()
+    $readline::Insert("Processing...")
+
+    $result = & {{lazycli}} `
+      query `
+      "--shell=powershell,$version" `
+      '--config={{config}}' `
+      $line 2>&1
+
+    $readline::RevertLine()
+
+    if ($LASTEXITCODE -ne 0) {
+        $rl::Insert("[lazycli failed] $result")
         return
     }
 
-    [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
-
-    $spinner = @('.','..','...','....','.....','......')
-    $index = 0
-
-    $job = Start-Job -ScriptBlock {
-        param($lineText)
-        $args = @(
-            'query'
-            "--shell=powershell,$version"
-            '--config={{config}}'
-            $lineText
-        )
-        {{lazycli}} @args
-    } -ArgumentList $line
-
-    while ($job.State -eq 'Running') {
-        [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
-        [Microsoft.PowerShell.PSConsoleReadLine]::Insert("Processing$($spinner[$index])")
-        Start-Sleep -Milliseconds 300
-        $index = ($index + 1) % $spinner.Count
+    if ($result -is [array]) {
+        $result = $result -join [Environment]::NewLine
     }
 
-    $result = Receive-Job $job
-    Remove-Job $job
-    [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
-    [Microsoft.PowerShell.PSConsoleReadLine]::Insert($result)
+    $readline::Insert([string]$result)
+  } catch {
+    $readline::RevertLine()
+    $readline::Insert("[lazycli error] $_")
+  }
 }
 """
 
