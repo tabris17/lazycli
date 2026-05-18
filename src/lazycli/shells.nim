@@ -17,14 +17,14 @@ macro importShells(register: untyped): untyped =
   result = newStmtList()
   
   var modules: seq[string] = @[]
-  let dir = currentSourcePath().splitFile().name
-  
-  for kind, path in walkDir("src/" & dir):
+  let (dir, name, _) = currentSourcePath().splitFile()
+
+  for kind, path in walkDir(joinPath(dir, name)):
     if kind != pcFile or not path.endsWith(".nim"):
       continue
 
     let module = path.splitFile().name
-    let modFullName = dir & "/" & module
+    let modFullName = name & "/" & module
     let modInitScript = newDotExpr(ident(module), ident("initScript"))
     let modBindKey = newDotExpr(ident(module), ident("bindKey"))
 
