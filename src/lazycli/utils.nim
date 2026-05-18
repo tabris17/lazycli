@@ -1,4 +1,4 @@
-import std/[os, tables]
+import std/[os, strutils, tables]
 
 
 when defined(windows):
@@ -45,33 +45,96 @@ elif defined(posix):
 
 
 func render*(tpl: string, values: Table[string, string]): string =
-  var i = 0
-  var buf = newStringOfCap(tpl.len)
+  proc findTagEnd(s: string, start: int): int =
+    var i = start
 
-  while i < tpl.len:
-    if i + 1 < tpl.len and tpl[i] == '{' and tpl[i+1] == '{':
-      var j = i + 2
-      while j + 1 < tpl.len and not (tpl[j] == '}' and tpl[j+1] == '}'):
-        inc j
-
-      if j + 1 >= tpl.len:
-        buf.add "{{"
-        i += 2
-        continue
-
-      let key = tpl[i+2 ..< j]
-
-      if values.hasKey(key):
-        buf.add values[key]
-      else:
-        buf.add "{{" & key & "}}"
-
-      i = j + 2
-    else:
-      buf.add tpl[i]
+    while i + 1 < s.len:
+      if s[i] == '}' and s[i + 1] == '}':
+        return i
       inc i
 
-  result = buf
+    return -1
+
+  proc renderRange(s: string, values: Table[string, string], startPos: int, endPos: int): string =
+    var i = startPos
+    var buf = newStringOfCap(endPos - startPos)
+
+    while i < endPos:
+      if i + 1 < endPos and s[i] == '{' and s[i + 1] == '{':
+        let tagEnd = findTagEnd(s, i + 2)
+
+        if tagEnd < 0 or tagEnd >= endPos:
+          buf.add s[i]
+          inc i
+          continue
+
+        let tag = s[i + 2 ..< tagEnd].strip
+
+        # {{@if key}}
+        if tag.startsWith("@if "):
+          let condKey = tag[4 .. ^1].strip
+
+          var depth = 1
+          var searchPos = tagEnd + 2
+          var blockEnd = -1
+
+          while searchPos < endPos:
+            if searchPos + 1 < endPos and
+               s[searchPos] == '{' and
+               s[searchPos + 1] == '{':
+
+              let nestedEnd = findTagEnd(s, searchPos + 2)
+
+              if nestedEnd < 0:
+                break
+
+              let nestedTag = s[searchPos + 2 ..< nestedEnd].strip
+
+              if nestedTag.startsWith("@if "):
+                inc depth
+              elif nestedTag == "@end":
+                dec depth
+
+                if depth == 0:
+                  blockEnd = searchPos
+                  let contentStart = tagEnd + 2
+
+                  if values.hasKey(condKey) and values[condKey].len > 0:
+                    buf.add renderRange(
+                      s,
+                      values,
+                      contentStart,
+                      blockEnd
+                    )
+
+                  i = nestedEnd + 2
+                  break
+
+              searchPos = nestedEnd + 2
+            else:
+              inc searchPos
+
+          if blockEnd < 0:
+            buf.add s[i]
+            inc i
+        # {{@end}}
+        elif tag == "@end":
+          i = tagEnd + 2
+        else:
+          if values.hasKey(tag):
+            buf.add values[tag]
+          else:
+            buf.add "{{" & tag & "}}"
+
+          i = tagEnd + 2
+
+      else:
+        buf.add s[i]
+        inc i
+
+    result = buf
+
+  result = renderRange(tpl, values, 0, tpl.len)
 
 
 proc getUsername*(): string =

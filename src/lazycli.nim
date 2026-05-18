@@ -8,6 +8,7 @@ const
   shellHelp = "choices: " & importedShells.join(", ")
   configHelp = "specify the config file"
   posixPathHelp = "use posix path separators in the generated script"
+  proxyHelp = "specify the proxy url (overrides config and environment variables)"
   mainHelp = fmt"""Natural Language to Shell Commands
 Name:     {appName}
 Version:  {buildVersion}
@@ -49,13 +50,14 @@ let argParser = newParser(appName):
       flag("-h", "--help", help=helpText, shortcircuit=true, hidden = true)
       flag("", "--posix-path", help=posixPathHelp)
       option("-c", "--config", help=configHelp)
+      option("-p", "--proxy", help=proxyHelp)
       arg("shell", help=shellHelp)
     command("query"):
       help("Query command")
       nohelpflag()
       flag("-h", "--help", help=helpText, shortcircuit=true, hidden = true)
       option("-c", "--config", help=configHelp)
-      option("-p", "--proxy", help="specify the proxy url (overrides config and environment variables)")
+      option("-p", "--proxy", help=proxyHelp)
       option("-s", "--shell", help="specify the shell name and version", required=true)
       flag("", "--posix-path", help=posixPathHelp)
       arg("text", help="Text to query")
@@ -97,11 +99,18 @@ proc main() =
       if shell in importedShells:
         let shellDescriptor = shellRegistry[shell]
         loadConfig(opts.config)
+        let (binPath, configPath, posixPath) =
+          if usePosixPath:
+            (getAppFilename().replace("\\", "/"), opts.config.replace("\\", "/"), "yes")
+          else:
+            (getAppFilename(), opts.config, "")
         echo shellDescriptor.initScript.render({
-          "lazycli": if usePosixPath: getAppFilename().replace("\\", "/") else: getAppFilename(),
-          "config": if usePosixPath: opts.config.replace("\\", "/") else: opts.config,
-          "key": shellDescriptor.bindKey(getConfig(keyBinding)),
-        }.toTable)
+            "lazycli": binPath,
+            "config": configPath,
+            "proxy": opts.proxy,
+            "posix_path": posixPath,
+            "key": shellDescriptor.bindKey(getConfig(keyBinding)),
+          }.toTable)
       else:
         raise newException(ValueError, "Unsupported shell: " & shell)
     of "query":

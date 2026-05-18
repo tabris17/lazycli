@@ -22,7 +22,9 @@ Set-PSReadLineKeyHandler -Key {{key}} -LongDescription "lazycli" -ScriptBlock {
     $result = & {{lazycli}} `
       query `
       "--shell=powershell,$version" `
-      '--config={{config}}' `
+      {{@if config}}'--config="{{config}}"'{{@end}} `
+      {{@if proxy}}'--proxy="{{proxy}}"'{{@end}} `
+      {{@if posix_path}}'--posix-path'{{@end}} `
       $line 2>&1
 
     $readline::RevertLine()
