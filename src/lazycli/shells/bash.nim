@@ -15,8 +15,10 @@ lazycli_query() {
   local result
   result=$(
     {{lazycli}} query \
-      --config={{config}} \
       --shell="bash,$BASH_VERSION" \
+      {{@if config}}--config="{{config}}"{{@end}} \
+      {{@if proxy}}--proxy="{{proxy}}"{{@end}} \
+      {{@if posix_path}}--posix_path{{@end}} \
       "$line"
   )
 
@@ -68,7 +70,7 @@ proc bindKey*(keyBinding: KeyBinding): string =
     of Delete:
       ""
     of F1:
-      ""
+      "\\eOP"
     of F2:
       ""
     of F3:
