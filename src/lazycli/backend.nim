@@ -49,7 +49,7 @@ proc query*(text: string): string =
     "datetime": $now(),
     "pwd": getCurrentDir(), 
     "user": getUsername(),
-    "tools": "",
+    "tools": getConfig(tools).join(", "),
     "dir_sep": $env.getEnv(dirSep),
   }.toTable)
 

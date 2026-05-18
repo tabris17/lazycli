@@ -138,6 +138,7 @@ proc main() =
             "prompt": getConfig(prompt)
             "proxy": getConfig(proxy)
             "key_binding": $getConfig(keyBinding)
+            "tools": getConfig(tools).join(", ")
             "provider.name": getConfig(provider).name
             "provider.base_url": getConfig(provider).baseUrl
             "provider.api_key": getConfig(provider).apiKey

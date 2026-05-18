@@ -29,8 +29,8 @@ Convert natural language into a single executable command for {{shell}}.
 - Current Time: {{datetime}}
 - Current User: {{user}}
 - Working Directory: {{pwd}}
-- Directory separator: {{dir_sep}}
-- Available tools: {{tools}}
+- Directory Separator: {{dir_sep}}
+- Installed External Tools: {{tools}}
 
 ## Constraints:
 
@@ -55,6 +55,7 @@ type
     provider: Provider
     prompt: string
     keyBinding: KeyBinding
+    tools: seq[string]
 
 
 var config: Config
@@ -118,6 +119,10 @@ template toTomlString(config: Config): string =
   toml["proxy"] = newTString(config.proxy)
   toml["prompt"] = newTString(config.prompt)
   toml["key_binding"] = newTString($config.keyBinding)
+  let tools = newTArray()
+  for tool in config.tools:
+    tools.add(newTString(tool))
+  toml["tools"] = tools
   let provider = newTTable()
   toml["provider"] = provider
   provider["name"] = newTString(config.provider.name)
@@ -141,6 +146,16 @@ proc getStr(data: TomlValueRef, key: string): string {.inline.} =
     raise newException(KeyError, "Missing required key: " & key)
 
 
+proc getStrSeq(data: TomlValueRef, key: string, default: seq[string] = @[]): seq[string] {.inline.} =
+  if data.hasKey(key):
+    let arr = data[key].getElems()
+    for i in 0..<arr.len:
+      result.add(arr[i].getStr())
+    return result
+  else:
+    return default
+
+
 proc isValidUrl(url: string): bool =
   try:
     let uri = parseUri(url)
@@ -157,6 +172,7 @@ proc loadConfig*(filename: string) =
   config.version = data.getStr("version")
   config.prompt = data.getStr("prompt", defaultPrompt)
   config.keyBinding = data.getStr("key_binding", defaultKeyBinding).parseKeyBinding()
+  config.tools = data.getStrSeq("tools")
   if not data.hasKey("provider"):
     raise newException(ValueError, "Missing 'provider' section in config file")
   let provider = data["provider"]
