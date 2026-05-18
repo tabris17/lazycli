@@ -1,5 +1,5 @@
 import std/[os, macros, strutils, tables]
-import ./keybinding
+import lazycli/keybinding
 
 
 type

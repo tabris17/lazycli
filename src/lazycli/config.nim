@@ -1,7 +1,6 @@
 import std/[os, macros, uri]
 import parsetoml
-import ./keybinding
-import ./version
+import lazycli/[keybinding, version]
 
 
 const
@@ -30,7 +29,7 @@ Convert natural language into a single executable command for {{shell}}.
 - Current Time: {{datetime}}
 - Current User: {{user}}
 - Working Directory: {{pwd}}
-- Path separator: {{path_separator}}
+- Directory separator: {{dir_sep}}
 - Available tools: {{tools}}
 
 ## Constraints:
@@ -49,16 +48,11 @@ type
     apiKey*: string
     model*: string
 
-  Shell* = object
-    name*: string
-    version*: string
-
   Config = object
     file: string
     version: string
     proxy: string
     provider: Provider
-    shell: Shell
     prompt: string
     keyBinding: KeyBinding
 

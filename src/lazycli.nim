@@ -1,17 +1,13 @@
 import std/[cmdline, macros, rdstdin, strformat, strutils, tables, terminal]
 import argparse
-import ./backend
-import ./config
-import ./keybinding
-import ./shells
-import ./utils
-import ./version
+import lazycli/[backend, config, env, keybinding, shells, utils, version]
 
 
 const
   helpText = "print this help"
   shellHelp = "choices: " & importedShells.join(", ")
   configHelp = "specify the config file"
+  posixPathHelp = "use posix path separators in the generated script"
   mainHelp = fmt"""Natural Language to Shell Commands
 Name:     {appName}
 Version:  {buildVersion}
@@ -51,7 +47,7 @@ let argParser = newParser(appName):
       help("Generate the shell init script")
       nohelpflag()
       flag("-h", "--help", help=helpText, shortcircuit=true, hidden = true)
-      flag("", "--posix-path", help="use posix path separators in the generated script")
+      flag("", "--posix-path", help=posixPathHelp)
       option("-c", "--config", help=configHelp)
       arg("shell", help=shellHelp)
     command("query"):
@@ -61,6 +57,7 @@ let argParser = newParser(appName):
       option("-c", "--config", help=configHelp)
       option("-p", "--proxy", help="specify the proxy url (overrides config and environment variables)")
       option("-s", "--shell", help="specify the shell name and version", required=true)
+      flag("", "--posix-path", help=posixPathHelp)
       arg("text", help="Text to query")
     command("config"):
       help("Manage config")
@@ -110,12 +107,15 @@ proc main() =
     of "query":
       let opts = opts.query.get
       loadConfig(opts.config)
+      detectEnv()
       if opts.proxy_opt.isSome:
         proxyUrl = opts.proxy
       let shellInfo = opts.shell.split(",", 2)
       if shellInfo.len < 2:
         raise newException(ValueError, "Parameter 'shell' must be in the format 'name,version'")
-      setConfig(shell, Shell(name: shellInfo[0], version: shellInfo[1]))
+      setEnv(shell, Shell(name: shellInfo[0], version: shellInfo[1]))
+      if opts.posix_path:
+        setEnv(dirSep, '/')
       echo backend.query(opts.text)
     of "config":
       let opts = opts.config.get

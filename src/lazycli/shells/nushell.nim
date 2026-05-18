@@ -1,5 +1,5 @@
 import std/[enumutils, strformat, strutils]
-import ../keybinding
+import lazycli/keybinding
 
 
 const initScript* = """

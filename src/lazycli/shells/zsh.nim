@@ -1,4 +1,4 @@
-import ../keybinding
+import lazycli/keybinding
 
 
 const initScript* = """

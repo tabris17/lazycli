@@ -1,6 +1,5 @@
 import std/[envvars, httpclient, json, os, strutils, tables, times, uri]
-import ./config
-import ./utils
+import lazycli/[config, env, utils]
 
 
 var proxyUrl* = ""
@@ -40,14 +39,14 @@ proc query*(text: string): string =
   let httpClient = newHttpClient(proxy = createProxy(isHttpsUrl))
   let prompt = getConfig(prompt).render({
     "os": getPlatform(),
-    "shell": getConfig(shell).name,
-    "shell_version": getConfig(shell).version,
+    "shell": env.getEnv(shell).name,
+    "shell_version": env.getEnv(shell).version,
     "locale": getLocale(),
     "datetime": $now(),
     "pwd": getCurrentDir(), 
     "user": getUsername(),
     "tools": "",
-    "path_separator": $DirSep,
+    "dir_sep": $env.getEnv(dirSep),
   }.toTable)
 
   let response = httpClient.request(
