@@ -109,7 +109,7 @@ proc main() =
       loadConfig(opts.config)
       detectEnv()
       if opts.proxy_opt.isSome:
-        proxyUrl = opts.proxy
+        setEnv(proxy, opts.proxy)
       let shellInfo = opts.shell.split(",", 2)
       if shellInfo.len < 2:
         raise newException(ValueError, "Parameter 'shell' must be in the format 'name,version'")

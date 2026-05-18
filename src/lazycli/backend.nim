@@ -2,9 +2,6 @@ import std/[envvars, httpclient, json, os, strutils, tables, times, uri]
 import lazycli/[config, env, utils]
 
 
-var proxyUrl* = ""
-
-
 const entryPoint = "/chat/completions"
 
 
@@ -23,13 +20,15 @@ proc createProxy(preferHttps: bool): Proxy {.inline.} =
       return newProxy(url)
 
   if preferHttps:
-    testUrl(proxyUrl)
+    testUrl(env.getEnv(proxy))
     testUrl(getEnv("https_proxy"))
     testUrl(getEnv("http_proxy"))
+    testUrl(getEnv("all_proxy"))
     testUrl(getConfig(proxy))
   else:
-    testUrl(proxyUrl)
+    testUrl(env.getEnv(proxy))
     testUrl(getEnv("http_proxy"))
+    testUrl(getEnv("all_proxy"))
     testUrl(getConfig(proxy))
 
 
