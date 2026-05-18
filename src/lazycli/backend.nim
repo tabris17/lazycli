@@ -21,13 +21,18 @@ proc createProxy(preferHttps: bool): Proxy {.inline.} =
 
   if preferHttps:
     testUrl(env.getEnv(proxy))
+    testUrl(getEnv("HTTPS_PROXY"))
     testUrl(getEnv("https_proxy"))
+    testUrl(getEnv("HTTP_PROXY"))
     testUrl(getEnv("http_proxy"))
+    testUrl(getEnv("ALL_PROXY"))
     testUrl(getEnv("all_proxy"))
     testUrl(getConfig(proxy))
   else:
     testUrl(env.getEnv(proxy))
+    testUrl(getEnv("HTTP_PROXY"))
     testUrl(getEnv("http_proxy"))
+    testUrl(getEnv("ALL_PROXY"))
     testUrl(getEnv("all_proxy"))
     testUrl(getConfig(proxy))
 
