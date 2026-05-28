@@ -4,6 +4,9 @@ import lazycli/keybinding
 
 const initScript* = """
 Set-PSReadLineKeyHandler -Key {{key}} -LongDescription "lazycli" -ScriptBlock {
+  [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+  #$OutputEncoding = [System.Text.UTF8Encoding]::new()
+
   $readline = [Microsoft.PowerShell.PSConsoleReadLine]
   $version = $PSVersionTable.PSVersion.ToString()
 
@@ -19,23 +22,41 @@ Set-PSReadLineKeyHandler -Key {{key}} -LongDescription "lazycli" -ScriptBlock {
     $readline::RevertLine()
     $readline::Insert("Processing...")
 
-    $result = & {{lazycli}} `
-      query `
-      "--shell=powershell,$version" `
-      {{@if config}}'--config="{{config}}"'{{@end}} `
-      {{@if proxy}}'--proxy="{{proxy}}"'{{@end}} `
-      {{@if posix_path}}'--posix-path'{{@end}} `
-      $line 2>&1
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = "{{lazycli}}"
+    $psi.Arguments = "query --shell=powershell,$version {{@if config}}--config="{{config}}"{{@end}} {{@if proxy}}--proxy="{{proxy}}"{{@end}} {{@if posix_path}}--posix-path{{@end}} $line"
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $psi
+    $process.Start() | Out-Null
+
+    $stdout = $process.StandardOutput.BaseStream
+    $stderr = $process.StandardError.BaseStream
+
+    $msOut = New-Object System.IO.MemoryStream
+    $msErr = New-Object System.IO.MemoryStream
+
+    $stdout.CopyTo($msOut)
+    $stderr.CopyTo($msErr)
+
+    $process.WaitForExit()
+
+    $outBytes = $msOut.ToArray()
+    $errBytes = $msErr.ToArray()
+
+    $result = [System.Text.Encoding]::UTF8.GetString($outBytes + $errBytes)
+    $result = [string]$result.TrimEnd("`r","`n")
+    $exitCode = $process.ExitCode
 
     $readline::RevertLine()
 
-    if ($LASTEXITCODE -ne 0) {
-        $rl::Insert("[lazycli failed] $result")
+    if ($exitCode -ne 0) {
+        $readline::Insert("[lazycli failed] $result")
         return
-    }
-
-    if ($result -is [array]) {
-        $result = $result -join [Environment]::NewLine
     }
 
     $readline::Insert([string]$result)
