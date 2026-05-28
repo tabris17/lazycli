@@ -37,6 +37,20 @@ proc createProxy(preferHttps: bool): Proxy {.inline.} =
     testUrl(getConfig(proxy))
 
 
+proc renderPrompt*(): string =
+  getConfig(prompt).render({
+    "os": getPlatform(),
+    "shell": env.getEnv(shell).name,
+    "shell_version": env.getEnv(shell).version,
+    "locale": getLocale(),
+    "datetime": $now(),
+    "pwd": getCurrentDir(), 
+    "user": getUsername(),
+    "tools": getConfig(tools).join(", "),
+    "dir_sep": $env.getEnv(dirSep),
+  }.toTable)
+
+
 proc query*(text: string): string =
   let provider = getConfig(provider)
   let isHttpsUrl = parseUri(provider.baseUrl).scheme == "https"

@@ -9,6 +9,7 @@ const
   configHelp = "specify the config file"
   posixPathHelp = "use posix path separators in the generated script"
   proxyHelp = "specify the proxy url (overrides config and environment variables)"
+  shellOptionHelp = "specify the shell name and version"
   mainHelp = fmt"""Natural Language to Shell Commands
 Name:     {appName}
 Version:  {buildVersion}
@@ -39,6 +40,13 @@ template tryReadLineFromStdin(prompt: string, default = ""): string =
   try: readLineFromStdin(prompt) except: default
 
 
+proc parseShellOption(shellWithVersion: string) {.inline.} =
+  let shellInfo = shellWithVersion.split(",", 2)
+  if shellInfo.len < 2:
+    raise newException(ValueError, "Parameter 'shell' must be in the format 'name,version'")
+  setEnv(shell, Shell(name: shellInfo[0], version: shellInfo[1]))
+
+
 let argParser = newParser(appName):
     help(mainHelp)
     nohelpflag()
@@ -58,9 +66,14 @@ let argParser = newParser(appName):
       flag("-h", "--help", help=helpText, shortcircuit=true, hidden = true)
       option("-c", "--config", help=configHelp)
       option("-p", "--proxy", help=proxyHelp)
-      option("-s", "--shell", help="specify the shell name and version", required=true)
+      option("-s", "--shell", help=shellOptionHelp, required=true)
       flag("", "--posix-path", help=posixPathHelp)
       arg("text", help="Text to query")
+    command("prompt"):
+      help("Preview prompt template")
+      option("-c", "--config", help=configHelp)
+      option("-s", "--shell", help=shellOptionHelp, required=true)
+      flag("", "--posix-path", help=posixPathHelp)
     command("config"):
       help("Manage config")
       nohelpflag()
@@ -119,13 +132,18 @@ proc main() =
       detectEnv()
       if opts.proxy_opt.isSome:
         setEnv(proxy, opts.proxy)
-      let shellInfo = opts.shell.split(",", 2)
-      if shellInfo.len < 2:
-        raise newException(ValueError, "Parameter 'shell' must be in the format 'name,version'")
-      setEnv(shell, Shell(name: shellInfo[0], version: shellInfo[1]))
+      parseShellOption(opts.shell)
       if opts.posix_path:
         setEnv(dirSep, '/')
       echo backend.query(opts.text)
+    of "prompt":
+      let opts = opts.prompt.get
+      loadConfig(opts.config)
+      detectEnv()
+      parseShellOption(opts.shell)
+      if opts.posix_path:
+        setEnv(dirSep, '/')
+      echo backend.renderPrompt()
     of "config":
       let opts = opts.config.get
       case opts.command:
