@@ -24,7 +24,7 @@ Set-PSReadLineKeyHandler -Key {{key}} -LongDescription "lazycli" -ScriptBlock {
 
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = "{{lazycli}}"
-    $psi.Arguments = "query --shell=powershell,$version {{@if config}}--config="{{config}}"{{@end}} {{@if proxy}}--proxy="{{proxy}}"{{@end}} {{@if posix_path}}--posix-path{{@end}} $line"
+    $psi.Arguments = "query --shell=powershell,$version {{@if config}}--config="{{config}}"{{@end}} {{@if proxy}}--proxy="{{proxy}}"{{@end}} {{@if posix_path}}--posix-path{{@end}} `"$line`""
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
     $psi.UseShellExecute = $false
