@@ -62,7 +62,7 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          mv lazycli lazycli-${{ matrix.target }}
+          mv src/lazycli lazycli-${{ matrix.target }}
 
       - name: Prepare artifact (Windows)
         if: runner.os == 'Windows'
@@ -83,7 +83,7 @@ jobs:
           fi
 
           # Create zip; exe keeps its original name inside
-          7z a lazycli-${{ matrix.target }}.zip lazycli.exe libcrypto-1_1-x64.dll libssl-1_1-x64.dll cacert.pem
+          7z a lazycli-${{ matrix.target }}.zip src/lazycli.exe libcrypto-1_1-x64.dll libssl-1_1-x64.dll cacert.pem
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
