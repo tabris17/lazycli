@@ -57,10 +57,10 @@ jobs:
           nim-version: 2.2.12
 
       - name: Install dependencies
-        run: nimble install -d
+        run: nimble install -d -y
 
       - name: Build release
-        run: nimble release
+        run: nimble c -d:release -o:bin/lazycli src/lazycli.nim
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
