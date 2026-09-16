@@ -1,0 +1,92 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  validate:
+    name: Validate tag is on main
+    runs-on: ubuntu-latest
+    outputs:
+      is_on_main: ${{ steps.check.outputs.on_main }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check tag commit is on main branch
+        id: check
+        run: |
+          if git merge-base --is-ancestor HEAD origin/main; then
+            echo "on_main=true" >> $GITHUB_OUTPUT
+            echo "Tag is on main branch, proceeding..."
+          else
+            echo "on_main=false" >> $GITHUB_OUTPUT
+            echo "Tag is NOT on main branch, aborting!"
+            exit 1
+          fi
+
+  build:
+    name: Build (${{ matrix.target }})
+    needs: [validate]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x86_64
+            binary: lazycli
+          - os: ubuntu-24.04-arm
+            target: linux-arm64
+            binary: lazycli
+          - os: macos-latest
+            target: macos-arm64
+            binary: lazycli
+          - os: windows-latest
+            target: windows-x86_64
+            binary: lazycli.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nim
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: 2.2.12
+
+      - name: Install dependencies
+        run: nimble install -d
+
+      - name: Build release
+        run: nimble release
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lazycli-${{ matrix.target }}
+          path: bin/${{ matrix.binary }}
+
+  release:
+    name: Create Release
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
