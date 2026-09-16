@@ -15,7 +15,7 @@ function lazycli_query
     {{lazycli}} query \
       --config={{config}} \
       --shell="fish,$FISH_VERSION" \
-      $line | string trim
+      $line 2>&1 | string trim
   )
 
   if test -z "$result"
