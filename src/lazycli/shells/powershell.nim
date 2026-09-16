@@ -87,7 +87,10 @@ proc bindKey*(keyBinding: KeyBinding): string =
         of Left, Right, Up, Down:
           keyName & "Arrow"
         of Space:
-          "@"
+          if Ctrl in keyBinding.modifiers:
+            "@"
+          else:
+            "Spacebar"
         else:
           keyName
 
