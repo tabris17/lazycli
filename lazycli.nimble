@@ -2,7 +2,7 @@ import strformat
 
 # Package
 
-version       = "0.2.0"
+version       = "0.1.0"
 author        = "fournoas"
 description   = "Natural Language to Shell Commands"
 license       = "MIT"
