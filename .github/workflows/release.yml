@@ -37,16 +37,12 @@ jobs:
         include:
           - os: ubuntu-latest
             target: linux-x86_64
-            binary: lazycli
           - os: ubuntu-24.04-arm
             target: linux-arm64
-            binary: lazycli
           - os: macos-latest
             target: macos-arm64
-            binary: lazycli
           - os: windows-latest
             target: windows-x86_64
-            binary: lazycli.exe
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -60,13 +56,40 @@ jobs:
         run: nimble install -d -y
 
       - name: Build release
-        run: nimble c -d:release -o:bin/lazycli src/lazycli.nim
+        run: nimble c -d:release src/lazycli.nim
+
+      - name: Prepare artifact (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mv lazycli lazycli-${{ matrix.target }}
+
+      - name: Prepare artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          # Bundle DLLs from Nim compiler and CA certs into a zip
+          nim_dir=$(dirname "$(which nim)")
+          cp "$nim_dir/libcrypto-1_1-x64.dll" .
+          cp "$nim_dir/libssl-1_1-x64.dll" .
+
+          # cacert.pem — prefer from Nim distribution, fallback to download
+          if [ -f "$nim_dir/cacert.pem" ]; then
+            cp "$nim_dir/cacert.pem" .
+          elif [ -f "$nim_dir/../lib/cacert.pem" ]; then
+            cp "$nim_dir/../lib/cacert.pem" .
+          else
+            curl -sL https://curl.se/ca/cacert.pem -o cacert.pem
+          fi
+
+          # Create zip; exe keeps its original name inside
+          7z a lazycli-${{ matrix.target }}.zip lazycli.exe libcrypto-1_1-x64.dll libssl-1_1-x64.dll cacert.pem
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
           name: lazycli-${{ matrix.target }}
-          path: bin/${{ matrix.binary }}
+          path: lazycli-${{ matrix.target }}*
 
   release:
     name: Create Release
