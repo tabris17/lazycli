@@ -6,28 +6,21 @@ import lazycli/[keybinding, version]
 const
   defaultConfigFile = "config.toml"
   defaultKeyBinding = "F1"
+  defaultMaxRetries = 3
   defaultPrompt = """You are a deterministic command generation engine.
 
-Your task is to convert a natural language instruction into exactly one directly executable command for the target shell environment.
+Your task is to convert a natural language instruction into executable shell commands.
 
-## STRICT OUTPUT RULES
+## GUIDELINES
 
-1. Output EXACTLY one executable command.
-2. Output ONLY the command itself.
-3. Do NOT output explanations, comments, notes, warnings, markdown, or code fences.
-4. Do NOT output multiple commands.
-5. Do NOT output examples, placeholders, templates, or pseudo-code.
-6. Output MUST be a single line without LF or CRLF.
-7. Do NOT include leading/trailing spaces or invisible characters.
-8. The output must be executable immediately without modification.
-9. The command MUST be compatible with the specified OS and shell.
-10. Prefer the shortest reliable command.
-11. Avoid interactive commands unless explicitly requested.
-12. Avoid destructive operations unless explicitly requested.
+1. Prefer the shortest reliable command.
+2. Avoid interactive commands unless explicitly requested.
+3. Avoid destructive operations unless explicitly requested.
+4. Commands MUST be compatible with the specified OS and shell.
 
 ## FAILURE HANDLING
 
-If the request is impossible, unsafe, unsupported, or fundamentally ambiguous, output exactly a single line shell comment explaining the reason.
+If the request is impossible, unsafe, unsupported, or fundamentally ambiguous, indicate that no command can be generated.
 
 ## SYSTEM ENVIRONMENT
 
@@ -39,6 +32,32 @@ If the request is impossible, unsafe, unsupported, or fundamentally ambiguous, o
 - Working Directory: {{pwd}}
 - Directory Separator: {{dir_sep}}
 - Installed External Tools: {{tools}}
+"""
+
+const hardcodedFormatPrompt* = """
+## OUTPUT FORMAT
+
+Respond ONLY with a JSON object in the exact format below. Do NOT include any other text, markdown, or code fences.
+
+{
+  "commands": [
+    {
+      "command": "the command text",
+      "description": "brief explanation of what the command does",
+      "type": "external"
+    }
+  ]
+}
+
+### RULES:
+- "commands" is an array of command objects, sorted by relevance (most relevant first)
+- Maximum 10 commands. Do NOT pad the list — return only genuinely useful options
+- Each command object has:
+  * "command": The executable command string (required, non-empty)
+  * "description": One-line explanation of the command (required)
+  * "type": Either "external" (external program) or "builtin" (shell built-in) (required)
+- Output ONLY the JSON object, nothing else
+- If the request is impossible, unsafe, or ambiguous, return {"commands": []}
 """
 
 
@@ -57,6 +76,7 @@ type
     prompt: string
     keyBinding: KeyBinding
     tools: seq[string]
+    maxRetries: int
 
 
 var config: Config
@@ -120,6 +140,7 @@ template toTomlString(config: Config): string =
   toml["proxy"] = newTString(config.proxy)
   toml["prompt"] = newTString(config.prompt)
   toml["key_binding"] = newTString($config.keyBinding)
+  toml["max_retries"] = newTInt(config.maxRetries)
   let tools = newTArray()
   for tool in config.tools:
     tools.add(newTString(tool))
@@ -174,6 +195,11 @@ proc loadConfig*(filename: string) =
   config.prompt = data.getStr("prompt", defaultPrompt)
   config.keyBinding = data.getStr("key_binding", defaultKeyBinding).parseKeyBinding()
   config.tools = data.getStrSeq("tools")
+  config.maxRetries =
+    if data.hasKey("max_retries"):
+      data["max_retries"].getInt()
+    else:
+      defaultMaxRetries
   if not data.hasKey("provider"):
     raise newException(ValueError, "Missing 'provider' section in config file")
   let provider = data["provider"]

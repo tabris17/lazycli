@@ -12,6 +12,7 @@ type
     shell*: Shell
     proxy*: string
     dirSep: char
+    verbose: bool
 
 
 var env: Env

@@ -10,6 +10,7 @@ const
   posixPathHelp = "use posix path separators in the generated script"
   proxyHelp = "specify the proxy url (overrides config and environment variables)"
   shellOptionHelp = "specify the shell name and version"
+  verboseHelp = "enable verbose output with full request/response details"
   mainHelp = fmt"""Natural Language to Shell Commands
 Name:     {appName}
 Version:  {buildVersion}
@@ -64,6 +65,7 @@ let argParser = newParser(appName):
       help("Query command")
       nohelpflag()
       flag("-h", "--help", help=helpText, shortcircuit=true, hidden = true)
+      flag("-v", "--verbose", help=verboseHelp)
       option("-c", "--config", help=configHelp)
       option("-p", "--proxy", help=proxyHelp)
       option("-s", "--shell", help=shellOptionHelp, required=true)
@@ -132,6 +134,8 @@ proc main() =
       detectEnv()
       if opts.proxy_opt.isSome:
         setEnv(proxy, opts.proxy)
+      if opts.verbose:
+        setEnv(verbose, true)
       parseShellOption(opts.shell)
       if opts.posix_path:
         setEnv(dirSep, '/')
@@ -165,6 +169,7 @@ proc main() =
             "prompt": getConfig(prompt)
             "proxy": getConfig(proxy)
             "key_binding": $getConfig(keyBinding)
+            "max_retries": $getConfig(maxRetries)
             "tools": getConfig(tools).join(", ")
             "provider.name": getConfig(provider).name
             "provider.base_url": getConfig(provider).baseUrl
