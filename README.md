@@ -44,6 +44,12 @@ Add the following to the end of `~/.bashrc`:
 eval "$(lazycli init bash)"
 ```
 
+If you are running Bash on Windows (e.g., Git Bash, MSYS2), add the `--posix-path` flag to ensure correct path handling:
+
+```bash
+eval "$(lazycli init --posix-path bash)"
+```
+
 ### Fish
 
 Add the following to the end of `~/.config/fish/config.fish`:
@@ -79,10 +85,11 @@ eval "$(lazycli init zsh)"
 
 ### Advanced
 
-`lazy init` supports the following options:
+`lazycli init` supports the following options:
 
 - `--config`: Specifies the configuration file to use
 - `--posix-path`: Forces the init shell script to use POSIX path separators. Useful for portable versions of Bash running on Windows
+- `-p, --proxy`: Specifies the proxy URL (overrides config and environment variables)
 
 ## Usage
 
