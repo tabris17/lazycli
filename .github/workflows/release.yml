@@ -107,12 +107,14 @@ jobs:
           run: |
             set -e
             # Bootstrap Nim compiler from source per official docs
-            git clone --depth 1 --branch v2.2.12 --recursive https://github.com/nim-lang/Nim "$HOME/nim"
-            cd "$HOME/nim/csources" && sh build.sh && cd ..
+            curl -sL https://nim-lang.org/download/nim-2.2.12.tar.xz -o /tmp/nim.tar.xz
+            tar xf /tmp/nim.tar.xz -C "$HOME"
+            NIM_DIR="$HOME/nim-2.2.12"
+            cd "$NIM_DIR" && sh build.sh && cd "$NIM_DIR"
             bin/nim c koch
             ./koch boot -d:release
             ./koch nimble
-            export PATH="$HOME/.nimble/bin:$HOME/nim/bin:$PATH"
+            export PATH="$HOME/.nimble/bin:$NIM_DIR/bin:$PATH"
 
             # Build lazycli
             cd /home/runner/work/lazycli/lazycli
