@@ -103,9 +103,11 @@ jobs:
         with:
           usesh: true
           prepare: |
-            pkg update -f
-            pkg install -y nim nimble
+            pkg install -y nim git
           run: |
+            export PATH="/usr/local/bin:$PATH"
+            which nim
+            nim --version
             cd /home/runner/work/lazycli/lazycli
             nimble install -d -y
             nimble c -d:release -o:lazycli src/lazycli.nim
