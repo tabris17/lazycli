@@ -103,6 +103,7 @@ jobs:
         with:
           usesh: true
           prepare: |
+            pkg update -f
             pkg install -y nim nimble
           run: |
             cd /home/runner/work/lazycli/lazycli
