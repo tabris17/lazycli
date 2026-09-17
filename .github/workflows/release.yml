@@ -107,8 +107,7 @@ jobs:
           run: |
             set -e
             # Bootstrap Nim compiler from source per official docs
-            git clone --depth 1 https://github.com/nim-lang/Nim "$HOME/nim"
-            git clone --depth 1 https://github.com/nim-lang/csources "$HOME/nim/csources"
+            git clone --depth 1 --branch v2.2.12 --recursive https://github.com/nim-lang/Nim "$HOME/nim"
             cd "$HOME/nim/csources" && sh build.sh && cd ..
             bin/nim c koch
             ./koch boot -d:release
