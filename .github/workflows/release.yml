@@ -103,11 +103,13 @@ jobs:
         with:
           usesh: true
           prepare: |
-            pkg install -y nim git
+            pkg install -y curl git gcc gmake openssl
           run: |
-            export PATH="/usr/local/bin:$PATH"
-            which nim
-            nim --version
+            set -e
+            # Install Nim via choosenim (builds from source on FreeBSD)
+            curl -sL https://nim-lang.org/choosenim/init.sh -o /tmp/choosenim.sh
+            sh /tmp/choosenim.sh -y
+            export PATH="$HOME/.nimble/bin:$PATH"
             cd /home/runner/work/lazycli/lazycli
             nimble install -d -y
             nimble c -d:release -o:lazycli src/lazycli.nim
