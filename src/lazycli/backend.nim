@@ -8,8 +8,8 @@ const entryPoint = "/chat/completions"
 type
   CommandOption* = object
     command*: string
-    description*: string
     commandType*: string  # "external" or "builtin"
+    deps*: seq[string]
 
 
 proc toFullUrl(baseUrl: string): string {.inline.} =
@@ -58,7 +58,7 @@ proc renderPrompt*(): string =
   }.toTable
 
   let userPrompt = getConfig(prompt).render(tplContext)
-  result = userPrompt & "\n\n" & hardcodedFormatPrompt
+  result = userPrompt & "\n\n" & systemPrompt
 
 
 proc validateResponse(content: string): seq[CommandOption] =
@@ -89,38 +89,50 @@ proc validateResponse(content: string): seq[CommandOption] =
     if cmdType notin ["external", "builtin"]:
       raise newException(ValueError, "'type' must be 'external' or 'builtin', got: " & cmdType)
 
-    if not item.hasKey("description") or item["description"].kind != JString:
-      raise newException(ValueError, "Each command must have a 'description' string")
-
   for item in cmds:
+    var deps: seq[string] = @[]
+    if item.hasKey("deps") and item["deps"].kind == JArray:
+      for dep in item["deps"]:
+        if dep.kind == JString and dep.getStr().strip().len > 0:
+          deps.add(dep.getStr())
     result.add(CommandOption(
       command: item["command"].getStr(),
-      description: item["description"].getStr(),
-      commandType: item["type"].getStr()
+      commandType: item["type"].getStr(),
+      deps: deps
     ))
 
 
-proc commandExists(cmd: string): bool =
-  ## Check if an external command exists on the system.
-  let firstWord = cmd.split()[0]
-  result = findExe(firstWord).len > 0
+proc checkDeps(deps: seq[string]): bool =
+  ## Check if all dependency commands exist on the system.
+  if deps.len == 0:
+    return true
+  for dep in deps:
+    if findExe(dep).len == 0:
+      return false
+  return true
 
 
 proc findFirstExecutable(options: seq[CommandOption]): string =
   ## Find the first available command:
   ## - "builtin" type is always accepted immediately
-  ## - "external" type requires the command to exist on the system
+  ## - "external" type requires all its dependencies to exist on the system
   ## Falls back to the first option if nothing is found.
+  # First pass: builtin commands first
   for opt in options:
     if opt.commandType == "builtin":
       return opt.command
-    elif opt.commandType == "external":
-      if commandExists(opt.command):
+
+  # Second pass: external commands with dep checking
+  for opt in options:
+    if opt.commandType == "external":
+      if checkDeps(opt.deps):
         return opt.command
 
-  # Fallback: return the first option anyway
-  if options.len > 0:
-    return options[0].command
+  # Fallback: return the first external option anyway (will likely fail)
+  for opt in options:
+    if opt.commandType == "external":
+      return opt.command
+
   return ""
 
 
@@ -135,7 +147,7 @@ proc query*(text: string): string =
   let requestBody = $(%*{
     "model": provider.model,
     "stream": false,
-    "temperature": 0,
+    "temperature": 0.1,
     "thinking": {"type": "disabled"},
     "messages": [
       {"role": "system", "content": fullPrompt},
