@@ -103,15 +103,19 @@ jobs:
         with:
           usesh: true
           prepare: |
-            pkg install -y curl git gcc gmake
+            pkg install -y git gcc gmake curl
           run: |
             set -e
-            # Search for Nim package and install
-            pkg search nim
-            pkg install -y nim 2>&1 || pkg install -y lang/nim 2>&1
-            export PATH="/usr/local/bin:$PATH"
-            which nim
-            nim --version
+            # Bootstrap Nim compiler from source per official docs
+            git clone --depth 1 https://github.com/nim-lang/Nim "$HOME/nim"
+            git clone --depth 1 https://github.com/nim-lang/csources "$HOME/nim/csources"
+            cd "$HOME/nim/csources" && sh build.sh && cd ..
+            bin/nim c koch
+            ./koch boot -d:release
+            ./koch nimble
+            export PATH="$HOME/.nimble/bin:$HOME/nim/bin:$PATH"
+
+            # Build lazycli
             cd /home/runner/work/lazycli/lazycli
             nimble install -d -y
             nimble c -d:release -o:lazycli src/lazycli.nim
