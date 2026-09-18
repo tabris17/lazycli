@@ -44,8 +44,8 @@ proc createProxy(preferHttps: bool): Proxy {.inline.} =
     testUrl(getConfig(proxy))
 
 
-proc renderPrompt*(): string =
-  let tplContext = {
+proc buildTemplateContext(): Table[string, string] =
+  {
     "os": getPlatform(),
     "shell": env.getEnv(shell).name,
     "shell_version": env.getEnv(shell).version,
@@ -57,8 +57,9 @@ proc renderPrompt*(): string =
     "dir_sep": $env.getEnv(dirSep),
   }.toTable
 
-  let userPrompt = getConfig(prompt).render(tplContext)
-  result = userPrompt & "\n\n" & systemPrompt
+
+proc renderPrompt*(): string =
+  result = systemPrompt.render(buildTemplateContext())
 
 
 proc validateResponse(content: string): seq[CommandOption] =
@@ -148,19 +149,26 @@ proc query*(text: string): string =
   let provider = getConfig(provider)
   let isHttpsUrl = parseUri(provider.baseUrl).scheme == "https"
   let httpClient = newHttpClient(proxy = createProxy(isHttpsUrl))
-  let fullPrompt = renderPrompt()
+  let tplContext = buildTemplateContext()
+  let systemContent = systemPrompt.render(tplContext)
   let maxRetries = getConfig(maxRetries)
   let isVerbose = env.getEnv(verbose)
+
+  var messages: seq[JsonNode] = @[]
+  messages.add(%*{"role": "system", "content": systemContent})
+
+  let customPrompt = getConfig(prompt)
+  if customPrompt.len > 0:
+    messages.add(%*{"role": "user", "content": customPrompt.render(tplContext)})
+
+  messages.add(%*{"role": "user", "content": text})
 
   let requestBody = $(%*{
     "model": provider.model,
     "stream": false,
     "temperature": 0.1,
     "thinking": {"type": "disabled"},
-    "messages": [
-      {"role": "system", "content": fullPrompt},
-      {"role": "user", "content": text}
-    ],
+    "messages": messages,
   })
 
   if isVerbose:

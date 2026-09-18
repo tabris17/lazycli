@@ -7,7 +7,7 @@ const
   defaultConfigFile = "config.toml"
   defaultKeyBinding = "F1"
   defaultMaxRetries = 3
-  defaultPrompt = """You are a deterministic command generation engine.
+  systemPrompt* = """You are a deterministic command generation engine.
 
 Convert a natural-language instruction into executable shell command candidates for the specified environment.
 
@@ -131,9 +131,7 @@ Within each group, apply the ordering rules from Section 4.
 If at least one valid `builtin` candidate exists, the first command MUST have `"type":"builtin"`.
 
 If no valid builtin exists but a valid native candidate exists, the first command MUST have `"type":"native"`.
-"""
 
-const systemPrompt* = """
 ## OUTPUT FORMAT
 
 Output ONLY a valid JSON object.
@@ -309,7 +307,7 @@ proc loadConfig*(filename: string) =
   config.file = filePath
   config.proxy = data.getStr("proxy", "")
   config.version = data.getStr("version")
-  config.prompt = data.getStr("prompt", defaultPrompt)
+  config.prompt = data.getStr("prompt", "")
   config.keyBinding = data.getStr("key_binding", defaultKeyBinding).parseKeyBinding()
   config.tools = data.getStrSeq("tools")
   config.maxRetries =
