@@ -88,7 +88,7 @@ eval "$(lazycli init zsh)"
 `lazycli init` 支持以下选项：
 
 - `--config`：指定要使用的配置文件
-- `--posix-path`：强制初始化脚本使用 POSIX 路径分隔符。适用于 Windows 上的便携版 Bash
+- `--posix-path`：强制初始化脚本使用 POSIX 路径分隔符。适用于移植到 Windows 上的 Bash
 - `-p, --proxy`：指定代理 URL（优先级高于配置文件和环境变量）
 
 ## 使用方法
