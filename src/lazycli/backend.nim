@@ -8,7 +8,7 @@ const entryPoint = "/chat/completions"
 type
   CommandOption* = object
     command*: string
-    commandType*: string  # "external" or "builtin"
+    commandType*: string  # "builtin", "native", or "external"
     deps*: seq[string]
 
 
@@ -86,8 +86,8 @@ proc validateResponse(content: string): seq[CommandOption] =
     if not item.hasKey("type") or item["type"].kind != JString:
       raise newException(ValueError, "Each command must have a 'type' string")
     let cmdType = item["type"].getStr()
-    if cmdType notin ["external", "builtin"]:
-      raise newException(ValueError, "'type' must be 'external' or 'builtin', got: " & cmdType)
+    if cmdType notin ["external", "builtin", "native"]:
+      raise newException(ValueError, "'type' must be 'builtin', 'native', or 'external', got: " & cmdType)
 
   for item in cmds:
     var deps: seq[string] = @[]
@@ -115,22 +115,30 @@ proc checkDeps(deps: seq[string]): bool =
 proc findFirstExecutable(options: seq[CommandOption]): string =
   ## Find the first available command:
   ## - "builtin" type is always accepted immediately
+  ## - "native" type requires all its dependencies to exist on the system
   ## - "external" type requires all its dependencies to exist on the system
   ## Falls back to the first option if nothing is found.
+  ## Priority order: builtin → native → external
   # First pass: builtin commands first
   for opt in options:
     if opt.commandType == "builtin":
       return opt.command
 
-  # Second pass: external commands with dep checking
+  # Second pass: native commands with dep checking
+  for opt in options:
+    if opt.commandType == "native":
+      if checkDeps(opt.deps):
+        return opt.command
+
+  # Third pass: external commands with dep checking
   for opt in options:
     if opt.commandType == "external":
       if checkDeps(opt.deps):
         return opt.command
 
-  # Fallback: return the first external option anyway (will likely fail)
+  # Fallback: return the first native or external option anyway (will likely fail)
   for opt in options:
-    if opt.commandType == "external":
+    if opt.commandType in ["native", "external"]:
       return opt.command
 
   return ""
@@ -206,6 +214,13 @@ proc query*(text: string): string =
       if attempt < maxRetries:
         continue
       raise newException(ValueError, "Invalid response format: " & e.msg)
+
+    # If the commands array is empty, it means the LLM couldn't generate
+    # any commands from the user's description (too vague) - don't retry.
+    if options.len == 0:
+      raise newException(ValueError,
+        "Unable to generate a command from the description. " &
+        "Please provide a more specific and clear description of the operation you want to perform.")
 
     # Find the first executable command
     result = findFirstExecutable(options)
