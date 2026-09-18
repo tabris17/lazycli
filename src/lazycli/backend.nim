@@ -58,10 +58,6 @@ proc buildTemplateContext(): Table[string, string] =
   }.toTable
 
 
-proc renderPrompt*(): string =
-  result = systemPrompt.render(buildTemplateContext())
-
-
 proc validateResponse(content: string): seq[CommandOption] =
   ## Parse and validate the LLM response.
   ## Returns a seq of CommandOption, or raises ValueError on invalid format.
@@ -150,23 +146,20 @@ proc query*(text: string): string =
   let isHttpsUrl = parseUri(provider.baseUrl).scheme == "https"
   let httpClient = newHttpClient(proxy = createProxy(isHttpsUrl))
   let tplContext = buildTemplateContext()
-  let systemContent = systemPrompt.render(tplContext)
   let maxRetries = getConfig(maxRetries)
   let isVerbose = env.getEnv(verbose)
 
   var messages: seq[JsonNode] = @[]
-  messages.add(%*{"role": "system", "content": systemContent})
-
-  let customPrompt = getConfig(prompt)
-  if customPrompt.len > 0:
-    messages.add(%*{"role": "user", "content": customPrompt.render(tplContext)})
-
+  messages.add(%*{"role": "system", "content": systemPrompt})
+  messages.add(%*{"role": "system", "content": getConfig(prompt)})
+  messages.add(%*{"role": "system", "content": systemEnvSection.render(tplContext)})
   messages.add(%*{"role": "user", "content": text})
 
   let requestBody = $(%*{
     "model": provider.model,
     "stream": false,
-    "temperature": 0.1,
+    "temperature": 0,
+    "top_p": 1,
     "thinking": {"type": "disabled"},
     "messages": messages,
   })

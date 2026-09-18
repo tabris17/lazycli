@@ -65,11 +65,6 @@ let argParser = newParser(appName):
       option("-s", "--shell", help=shellOptionHelp, required=true)
       flag("", "--posix-path", help=posixPathHelp)
       arg("text", help="Text to query")
-    command("prompt"):
-      help("Preview prompt template")
-      option("-c", "--config", help=configHelp)
-      option("-s", "--shell", help=shellOptionHelp, required=true)
-      flag("", "--posix-path", help=posixPathHelp)
     command("config"):
       help("Manage config")
       nohelpflag()
@@ -134,14 +129,6 @@ proc main() =
       if opts.posix_path:
         setEnv(dirSep, '/')
       echo backend.query(opts.text)
-    of "prompt":
-      let opts = opts.prompt.get
-      loadConfig(opts.config)
-      detectEnv()
-      parseShellOption(opts.shell)
-      if opts.posix_path:
-        setEnv(dirSep, '/')
-      echo backend.renderPrompt()
     of "config":
       let opts = opts.config.get
       case opts.command:
