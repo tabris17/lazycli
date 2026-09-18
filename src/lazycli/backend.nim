@@ -165,20 +165,7 @@ proc query*(text: string): string =
   })
 
   if isVerbose:
-    let req = parseJson(requestBody)
-    var ctx = ""
-    ctx.add "URL:   " & provider.baseUrl.toFullUrl & "\n"
-    ctx.add "Model: " & req["model"].getStr() & "\n"
-    ctx.add "Messages:\n"
-    for msg in req["messages"]:
-      let role = msg["role"].getStr()
-      let content = msg["content"].getStr()
-      let preview = if role == "system" and content.len > 80:
-        content[0..79] & "…"
-      else:
-        content
-      ctx.add "  [" & role & "] " & preview.replace("\n", " ") & "\n"
-    debug("Request", context = ctx.strip(chars = {'\n'}))
+    debug("Request " & provider.baseUrl.toFullUrl, context = parseJson(requestBody).pretty())
 
   for attempt in 0..maxRetries:
     let response = httpClient.request(
