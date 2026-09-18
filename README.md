@@ -116,13 +116,13 @@ You can also run `lazycli config` to locate the configuration file path.
 
 ### Custom Prompt
 
-Optionally, you can add a `prompt` field to `config.toml` to inject additional instructions. This custom prompt is **not a replacement** for the built-in system prompt — instead, it is sent as a separate `{"role": "user"}` message in the API request, placed before your actual query. This allows you to guide the LLM with extra context or constraints without affecting the core instruction template.
+Optionally, you can add a `prompt` field to `config.toml` to inject additional instructions. This custom prompt is **not a replacement** for the built-in system prompt — instead, it is sent as a separate message (role `"system"`) in the API request, placed before the runtime context. This allows you to guide the LLM with extra context or constraints without affecting the core instruction template.
 
 ```toml
 prompt = "Prefer PowerShell cmdlets over native executables when possible."
 ```
 
-[Preview the full rendered prompt](src/lazycli/config.nim) with `lazycli prompt` to see exactly what is sent to the model.
+[Preview the full rendered messages](src/lazycli/config.nim) to see exactly what is sent to the model.
 
 ## Supported LLM Backends
 
