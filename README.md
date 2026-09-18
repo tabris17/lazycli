@@ -91,6 +91,12 @@ eval "$(lazycli init zsh)"
 - `--posix-path`: Forces the init shell script to use POSIX path separators. Useful for portable versions of Bash running on Windows
 - `-p, --proxy`: Specifies the proxy URL (overrides config and environment variables)
 
+`lazycli query` also supports the `--verbose/-v` flag for debugging, which outputs the full API request and response to stderr:
+
+```bash
+lazycli query --verbose "list all files"
+```
+
 ## Usage
 
 First, initialize the configuration file using the following command:
@@ -120,6 +126,14 @@ Optionally, you can add a `prompt` field to `config.toml` to inject additional i
 
 ```toml
 prompt = "Prefer PowerShell cmdlets over native executables when possible."
+```
+
+### Retry on Invalid Response
+
+You can configure the maximum number of retries when the LLM returns an invalid response (e.g., malformed JSON). The default is `3`:
+
+```toml
+max_retries = 5
 ```
 
 [Preview the full rendered messages](src/lazycli/config.nim) to see exactly what is sent to the model.

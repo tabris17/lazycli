@@ -91,6 +91,12 @@ eval "$(lazycli init zsh)"
 - `--posix-path`：强制初始化脚本使用 POSIX 路径分隔符。适用于移植到 Windows 上的 Bash
 - `-p, --proxy`：指定代理 URL（优先级高于配置文件和环境变量）
 
+`lazycli query` 还支持 `--verbose/-v` 调试选项，可在 stderr 输出完整的 API 请求和响应内容：
+
+```bash
+lazycli query --verbose "list all files"
+```
+
 ## 使用方法
 
 首先执行以下命令初始化配置文件：
@@ -120,6 +126,14 @@ lazycli config init
 
 ```toml
 prompt = "尽可能优先使用 PowerShell cmdlet，而非本机可执行文件。"
+```
+
+### 无效响应重试
+
+当 LLM 返回无效响应（例如格式错误的 JSON）时，可配置最大重试次数。默认为 `3`：
+
+```toml
+max_retries = 5
 ```
 
 可查看[完整渲染后的消息结构](../src/lazycli/config.nim)了解实际发送给模型的内容。
