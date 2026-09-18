@@ -122,7 +122,7 @@ lazycli config init
 prompt = "尽可能优先使用 PowerShell cmdlet，而非本机可执行文件。"
 ```
 
-可查看[完整渲染后的消息结构](src/lazycli/config.nim)了解实际发送给模型的内容。
+可查看[完整渲染后的消息结构](../src/lazycli/config.nim)了解实际发送给模型的内容。
 
 ## 支持的 LLM 后端
 
