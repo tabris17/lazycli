@@ -1,5 +1,5 @@
 import std/[envvars, httpclient, json, os, strutils, tables, times, uri]
-import lazycli/[config, env, utils]
+import lazycli/[config, env, log, utils]
 
 
 const entryPoint = "/chat/completions"
@@ -172,10 +172,20 @@ proc query*(text: string): string =
   })
 
   if isVerbose:
-    stderr.writeLine("--- BEGIN REQUEST ---")
-    stderr.writeLine("URL: " & provider.baseUrl.toFullUrl)
-    stderr.writeLine(requestBody)
-    stderr.writeLine("--- END REQUEST ---")
+    let req = parseJson(requestBody)
+    var ctx = ""
+    ctx.add "URL:   " & provider.baseUrl.toFullUrl & "\n"
+    ctx.add "Model: " & req["model"].getStr() & "\n"
+    ctx.add "Messages:\n"
+    for msg in req["messages"]:
+      let role = msg["role"].getStr()
+      let content = msg["content"].getStr()
+      let preview = if role == "system" and content.len > 80:
+        content[0..79] & "…"
+      else:
+        content
+      ctx.add "  [" & role & "] " & preview.replace("\n", " ") & "\n"
+    debug("Request", context = ctx.strip(chars = {'\n'}))
 
   for attempt in 0..maxRetries:
     let response = httpClient.request(
@@ -189,9 +199,10 @@ proc query*(text: string): string =
     )
 
     if isVerbose:
-      stderr.writeLine("--- BEGIN RESPONSE ---")
-      stderr.writeLine(response.body)
-      stderr.writeLine("--- END RESPONSE ---")
+      let resp = parseJson(response.body)
+      let content = resp["choices"][0]["message"]["content"].getStr()
+      debug("Response (" & response.status & ")",
+        context = content.parseJson().pretty())
 
     if response.status != $Http200:
       if attempt < maxRetries:

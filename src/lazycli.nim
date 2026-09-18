@@ -1,6 +1,7 @@
-import std/[cmdline, macros, rdstdin, strformat, strutils, tables, terminal]
+import std/[cmdline, rdstdin, strformat, strutils, tables, terminal]
+import std/macros except error
 import argparse
-import lazycli/[backend, config, env, keybinding, shells, utils, version]
+import lazycli/[backend, config, env, keybinding, log, shells, utils, version]
 
 
 const
@@ -15,13 +16,6 @@ const
 Name:     {appName}
 Version:  {buildVersion}
 Homepage: {homepage}"""
-
-
-proc error(msg: string) {.inline.} = 
-  setForegroundColor(fgRed)
-  stderr.write "Error: "
-  resetAttributes()
-  stderr.writeLine msg
 
 
 macro printTable(alignWidth: int, content: untyped): untyped =
